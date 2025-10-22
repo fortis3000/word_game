@@ -1,0 +1,120 @@
+name: 'Linting'
+
+on: push
+
+env:
+  PYTHON_VERSION: "3.12"
+  POETRY_VERSION: "1.7.0"
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            **/*.py
+
+      - name: Installing Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: yezz123/setup-uv@v4
+        with:
+          uv-venv: "dev_env"
+      
+      - name: Cache uv virtualenv
+        uses: actions/cache@v4
+        with:
+          path: dev_env
+          key: ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
+
+      - name: Compile environment
+        shell: bash
+        id: uv-install
+        run: |
+          uv --version
+          uv pip compile pyproject.toml --extra lint -o requirements.txt
+      
+      - name: Install environment
+        shell: bash
+        id: uv-env-install
+        run: uv pip sync requirements.txt
+
+      - name: Checking linting with ruff
+        shell: bash
+        id: ruff-linting
+        run: ruff check ${{ steps.changed-files.outputs.all_changed_files }}
+      
+      - name: Checking formatting with ruff
+        shell: bash
+        id: ruff-format
+        run: ruff format --check ${{ steps.changed-files.outputs.all_changed_files }}
+      
+      - name: Check all steps
+        shell: bash
+        if: steps.ruff-linting.outcome != 'success'  || steps.ruff-format.outcome != 'success'
+        run: |
+          if [ "$steps.ruff-linting.outcome" != "success" ]; then
+            echo "Linting with ruff failed."
+          fi
+          
+          if [ "$steps.ruff-format.outcome" != "success" ]; then
+            echo "Formatting with ruff failed."
+          fi
+
+          exit 1
+
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Installing Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Debug - List files and environment
+        shell: bash
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "\nRepository contents:"
+          ls -la
+          echo "\nsrc directory contents:"
+          ls -la src/
+          echo "\nsrc/utils contents:"
+          ls -la src/utils/
+          echo "\nPython path:"
+          echo $PYTHONPATH
+          echo "\nPython version:"
+          python --version
+
+      - name: Install uv
+        uses: yezz123/setup-uv@v4
+        with:
+          uv-venv: "dev_env"
+
+      - name: Install project and dependencies
+        shell: bash
+        run: |
+          uv pip install -e .
+          uv pip install -e .[dev]
+
+      - name: Run tests with pytest
+        shell: bash
+        run: |
+          # Exit code 5 means no tests were collected, which is acceptable
+          pytest -v tests/ || [ $? -eq 5 ]

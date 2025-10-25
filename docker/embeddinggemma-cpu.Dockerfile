@@ -7,7 +7,7 @@ RUN uv venv
 RUN uv pip sync /tmp/requirements.txt
 
 WORKDIR /app
-COPY src/api/run_embedding_gemma.py /app/
+COPY src/embedding_service /app/
 
 # Set environment variable for model path
 ENV MODEL_PATH=/app/model
@@ -16,4 +16,4 @@ ENV MODEL_PATH=/app/model
 EXPOSE 8000
 
 # Run the FastAPI application
-CMD ["uv", "run", "python", "-m", "uvicorn", "run_embedding_gemma:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

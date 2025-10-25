@@ -131,6 +131,8 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
 @app.post("/v1/get_similarity")
 async def get_similarity(request: SimilarityRequest, req: Request) -> SimilarityResponse:
     """Calculate cosine similarity between two texts."""
+    # TODO: test and debug
+    # TODO: create client class and unit test it
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()
@@ -143,6 +145,19 @@ async def get_similarity(request: SimilarityRequest, req: Request) -> Similarity
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Similarity calculation failed: {str(e)}")
+
+
+@app.get("/health")
+async def health_check(req: Request):
+    """Health check endpoint for the service."""
+    try:
+        # Check if model is loaded and accessible
+        model = req.app.state.embedding_service.get_model()
+        # Try a simple embedding to verify model is working
+        _ = model.encode(["test"], convert_to_numpy=True)
+        return {"status": "healthy", "model": "loaded", "version": "1.0.0"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
 
 
 if __name__ == "__main__":

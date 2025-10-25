@@ -1,0 +1,9 @@
+-r embedding-model-requirements-cpu.in
+-r game-requirements.in
+-r telegram-bot-requirements.in
+-r linting-requirements.in
+
+pytest>=8.2.0
+
+ipykernel>=7.0.1
+jupyterlab

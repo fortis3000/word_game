@@ -1,0 +1,6 @@
+sentence-transformers[onnx]>=5.1
+fastapi>=0.119
+uvicorn>=0.38
+
+# for python 3.13
+# pyo3 >= 0.24

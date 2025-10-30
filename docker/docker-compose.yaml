@@ -32,7 +32,7 @@ services:
       embedding-service:
         condition: service_healthy
     env_file:
-      - ../telegram_bot.env
+      - ../.env
     environment:
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000
     volumes:

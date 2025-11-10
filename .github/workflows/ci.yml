@@ -43,13 +43,13 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
 
       - name: Install linting dependencies
-        run: uv pip sync -r environment/linting-requirements.txt
+        run: uv pip install -r environment/linting-requirements.txt
 
       - name: Checking linting with ruff
         run: ruff check .
 
       - name: Checking formatting with ruff
-        run: ruff format --check .
+        run: ruff format .
 
   testing:
     runs-on: ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
 
       - name: Install dependencies
-        run: uv pip sync -r environment/dev-reqirements.txt
+        run: uv pip install -r environment/dev-reqirements.txt
 
       - name: Run tests with pytest and coverage
         run: |

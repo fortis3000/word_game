@@ -1,42 +1,111 @@
-Standartized DS project template
-==============================
+# Word Game Project
 
-Project Organization
-------------
+[![CI](https://github.com/g-flas/word-game/actions/workflows/ci.yml/badge.svg)](https://github.com/g-flas/word-game/actions/workflows/ci.yml)
 
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
+## Overview
 
+This project is a word similarity game with a Telegram bot interface. It leverages a self-hosted sentence transformer model (embedding service) to calculate word embeddings and determine similarity between words. The project is structured as a modern Data Science application, featuring:
 
-Logging
--------
+- **FastAPI-based embedding service** (`src/embedding_service`)
+- **Core game logic** (`src/game`)
+- **Telegram bot** (`src/telegram_bot`)
+- **Shared utilities and clients** (`src/shared`, `src/utils`)
+- **Testing suite** (`tests`)
+- **Dockerized deployment** (`docker/`, `docker-compose.yaml`)
 
-This project provides a general-purpose logger utility in `src/utils/logger.py`.
+---
 
-**Usage Example:**
+## Project Structure
 
+```
+├── data/                # Data folders (external, interim, processed, raw)
+├── dicts/               # Dictionaries (e.g., German top1000)
+├── docker/              # Dockerfiles and docker-compose.yaml
+├── docs/                # Documentation and best practices
+├── models/              # Model files (empty by default)
+├── notebooks/           # Jupyter notebooks
+├── references/          # Manuals and explanatory materials
+├── reports/             # Generated analysis and figures
+├── src/
+│   ├── data/                # Data scripts
+│   ├── embedding_service/   # FastAPI embedding service
+│   ├── features/            # Feature engineering scripts
+│   ├── game/                # Game logic
+│   ├── models/              # (empty)
+│   ├── shared/              # Shared code (e.g., embedding client)
+│   ├── telegram_bot/        # Telegram bot code
+│   ├── utils/               # Utilities (logger, etc.)
+│   └── visualization/       # Visualization scripts
+├── tests/               # Test suite (pytest)
+├── .github/workflows/   # CI/CD configuration
+├── Makefile             # Precommit and utility commands
+├── pyproject.toml       # Project configuration and dependencies
+├── uv.lock              # Dependency lock file
+├── README.md            # This file
+```
+
+---
+
+## Setup & Usage
+
+### 1. Python Environment
+
+- **Python version:** 3.12+
+- **Dependency management:** Uses `pyproject.toml` and [uv](https://github.com/astral-sh/uv) for fast installs and lockfile management.
+
+**Create and activate a virtual environment:**
+```bash
+uv venv -p 3.12
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
+```
+
+**Sync dependencies:**
+```bash
+uv pip sync environment/dev-reqirements.txt
+```
+
+### 2. Linting & Formatting
+
+- Uses [ruff](https://docs.astral.sh/ruff/) for both linting and formatting.
+
+**Run checks:**
+```bash
+ruff format .
+ruff check .
+ruff check . --fix
+```
+
+### 3. Testing
+
+- Uses `pytest`. Tests are in the `tests/` directory.
+
+**Run tests:**
+```bash
+pytest
+```
+
+### 4. Docker
+
+- Dockerfiles for embedding service and Telegram bot are in `docker/`.
+- Use `docker-compose.yaml` to run services together.
+
+**Start services:**
+```bash
+docker compose -f docker/docker-compose.yaml up --build
+```
+
+### 5. CI/CD
+
+- GitHub Actions workflow in `.github/workflows/ci.yml` runs linting, tests, type checks, and builds Docker images.
+
+### 6. Logging
+
+- Use the logger utility in `src/utils/logger.py`. Supports plain text and JSON logging (set `LOG_FORMAT=json`).
+
+**Example:**
 ```python
 from src.utils.logger import get_logger
 
@@ -45,129 +114,42 @@ logger.info("This is an info message.")
 logger.error("This is an error message.")
 ```
 
-You can attach this logger to any module or script in the project.
-    └── src                <- Source code for use in this project.
-        ├── __init__.py    <- Makes src a Python module
-        │
-        ├── data           <- Scripts to download or generate data
-        │   └── make_dataset.py
-        │
-        ├── features       <- Scripts to turn raw data into features for modeling
-        │   └── build_features.py
-        │
-        ├── models         <- Scripts to train models and then use trained models to make
-        │   │                 predictions
-        │   ├── predict_model.py
-        │   └── train_model.py
-        │
-        └── visualization  <- Scripts to create exploratory and results oriented visualizations
-            └── visualize.py
-
-
-
---------
-
-## Goals
-- Reduce time to establish a repo specifically for DS needs.
-- To align data scientists in terms of skills and tools used.
-- Make project standard, easier to observe and predictable.
-
-## Description:
-
-### Project structure
-
-The current architecture is based on [Cookiecutter DS](https://github.com/drivendata/cookiecutter-data-science) approach. The reasoning behind it you can find [here](http://drivendata.github.io/cookiecutter-data-science/).
-
-### Code versioning tools
-To track, keep and share your codings [git](https://git-scm.com/) and [GitHub](https://github.com/) services are required.
-
-### Default programming language
-To leverage modern programming stack it is recommended to start with [Python 3.12](https://www.python.org/downloads/release/python-3120/) as default.
-
-### Dependency management
-To follow Single-Source-Of-Truth concept it makes sense to use [pyproject.toml](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/) to store project configuration. `pyproject.toml` configuration file allows to use the same configuration on different project steps: CI/CD, dev, test, prod etc.
-
-#### uv
-Newly announced [uv tool](https://github.com/astral-sh/uv).
-
-To create new virtual environment:
+To enable JSON logging:
 ```bash
-uv venv -p 3.12
+export LOG_FORMAT=json
 ```
 
-You might need to install or provide path to python 3.12 first.
+### 7. Game Data
 
-Activate an environment on macOS and Linux:
-```bash
-source .venv/bin/activate
-```
+- Example dictionary: `dicts/german/top1000.csv`
 
-On Windows:
-```shell
-.venv\Scripts\activate
-```
+---
 
-To build an requirements file from `pyproject.toml` use the following command: 
-```bash
-uv pip compile pyproject.toml --extra dev --extra lint -o requirements.txt
-```
+## Best Practices
 
-To install compiled file:
-```bash
-uv pip sync requirements.txt
-```
+- **File Paths:** Use absolute paths when interacting with files.
+- **Code Style:** All Python code should be formatted with `ruff` according to the configuration in `pyproject.toml`.
+- **Logging:** Use the logger utility from `src/utils/logger.py` for any new logging.
+- **Testing:** Any new features should be accompanied by corresponding tests in the `tests` directory.
 
-#### Poetry
-To manage Python dependencies using the same file we can use [poetry](https://python-poetry.org/).
+---
 
-### Codestyle: ruff
-Both for code linting and formatting Ruff package is proposed to use. See [here](https://docs.astral.sh/ruff/) for more details.
+## Getting Started
 
-Commands:
-```bash
-ruff format . --config pyproject.toml
-ruff check .  --config pyproject.toml
+1. **Clone the repository** (or create a new repo from this template).
+2. **Install, compile, and activate the virtual environment** (see above).
+3. **Adjust `pyproject.toml` and CI configuration** as needed.
+4. **Add your source code to the `src` folder.**
+5. **Enjoy coding!**
 
-ruff check . --fix
-```
+---
 
-### CI/CD: GitHub Actions
+## Contributing
 
-As a baseline, CI with integrated code style is provided (see `.github/workflows/ci.yml`). The current setup is based on using public Actions and configuring CI with `pyproject.toml` file. It is also possible to use custom Actions.
+Feel free to open issues or submit pull requests for improvements, bug fixes, or new features.
 
-### Test suite:
-TO BE DONE (pytest)
+---
 
+## License
 
-## Getting started
-1. Create repo from the template
-
-While creating repo, choose the current one as a template. Check [tutorial](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository) for more details.
-
-It is also possible to use this repository as a template in GitHub interface.
-
-2. Install, compile and activate virtual environment
-See [uv](#uv)
-
-3. Change parameters `pyproject.toml` if needed.
-4. Tweak CI configuration `.github/workflows/ci.yml` if needed.
-5. Put you source code in `src` folder.
-6. Enjoy coding :)
-
-## Best practices
-
-### Makefile
-Codestyle functionality could be applied locally using the Makefile created and the following command:
-
-```bash
-make precommit
-```
-
-or using `.sh` file directly:
-
-```bash
-bash ./precommit.sh
-```
-
-### Cli with typer
-TO BE DONE
+See [LICENSE](LICENSE) for details.

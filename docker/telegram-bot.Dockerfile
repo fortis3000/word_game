@@ -12,4 +12,4 @@ COPY src/ /app/src/
 COPY dicts/ /app/dicts/
 
 # Run the bot
-CMD ["uv", "run", "python", "-m", "src.telegram_bot"]
+# CMD ["uv", "run", "python", "-m", "src.telegram_bot"]

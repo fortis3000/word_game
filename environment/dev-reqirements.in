@@ -2,8 +2,7 @@
 -r game-requirements.in
 -r telegram-bot-requirements.in
 -r linting-requirements.in
-
-pytest>=8.2.0
+-r test-requirements.in
 
 ipykernel>=7.0.1
 jupyterlab

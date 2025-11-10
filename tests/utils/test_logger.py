@@ -46,6 +46,8 @@ def test_get_logger_message_format():
         logger = get_logger(name="test_message_format", level=logging.INFO)
         logger.info("Test message")
         output = mock_stdout.write.call_args[0][0]
-        # Check for basic format components: timestamp, levelname, name, message
-        assert "INFO test_message_format: Test message" in output
+        # Expect JSON-formatted output with these fields from pythonjsonlogger
+        assert '"levelname": "INFO"' in output
+        assert '"name": "test_message_format"' in output
+        assert '"message": "Test message"' in output
         assert "202" in output  # Check for year in timestamp

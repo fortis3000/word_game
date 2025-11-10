@@ -16,7 +16,7 @@ jobs:
         uses: yezz123/setup-uv@v4
 
       - name: Check if uv.lock is in sync
-        run: uv pip sync --check
+        run: uv pip check
 
   linting:
     runs-on: ubuntu-latest

@@ -40,7 +40,7 @@ async def test_get_similarities_success(embedding_client):
     with patch("httpx.AsyncClient") as mock_async_client_class:
         mock_client_instance = AsyncMock()
         mock_response = AsyncMock()
-        mock_response.json = AsyncMock(
+        mock_response.json = MagicMock(
             return_value={"similarity_score": [TEST_SIMILARITY_SCORE_1, TEST_SIMILARITY_SCORE_2]}
         )
         mock_response.raise_for_status = MagicMock(return_value=None)

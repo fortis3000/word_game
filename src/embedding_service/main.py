@@ -1,59 +1,24 @@
 """Module for running embedding service with Gemma model."""
 
 import os
-from typing import Any
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 
+# Debug mode
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+from src.embedding_service.models import (
+    EmbeddingRequest,
+    EmbeddingResponse,
+    SimilarityRequest,
+    SimilarityResponse,
+)
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-
-class EmbeddingRequest(BaseModel):
-    """Request model for the embedding endpoint."""
-
-    input: str | list[str] = Field(
-        description="The text to embed. Can be a string or array of strings."
-    )
-    model: str | None = Field(
-        default="embeddinggemma-300m", description="Model to use for embeddings"
-    )
-    encoding_format: str | None = Field(
-        default="float", description="The format to return the embeddings in"
-    )
-
-
-class SimilarityRequest(BaseModel):
-    """Request model for similarity endpoint."""
-
-    text1: str = Field(description="First text for similarity comparison")
-    text2: list[str] = Field(description="Second text for similarity comparison")
-    model: str | None = Field(
-        default="embeddinggemma-300m", description="Model to use for embeddings"
-    )
-    encoding_format: str | None = Field(
-        default="float", description="The format to return the embeddings in"
-    )
-
-
-class SimilarityResponse(BaseModel):
-    """Response model for similarity endpoint."""
-
-    similarity_score: list[float] = Field(
-        description="Cosine similarity score between the two texts"
-    )
-
-
-class EmbeddingResponse(BaseModel):
-    """Response model matching OpenAI's embedding response format."""
-
-    object: str = "list"
-    model: str
-    data: list[dict[Any, Any]]
-    usage: dict[Any, Any]
+EMBEDDING_DIM = 768
 
 
 class EmbeddingService:
@@ -66,12 +31,22 @@ class EmbeddingService:
 
     async def load_model(self):
         """Load the Gemma model."""
-        model_name = "google/embeddinggemma-300m"
+        model_name = "google/embeddinggemma-300M"  # "tencent/KaLM-Embedding-Gemma3-12B-2511"  # "ibm-granite/granite-embedding-278m-multilingual"  # "all-MiniLM-L6-v2"  # "google/embeddinggemma-300M"
         model_path = os.getenv("MODEL_PATH", model_name)
         logger.info(f"Attempting to load model from: {model_path}")
 
         try:
-            self.model = SentenceTransformer(model_path)
+            self.model = SentenceTransformer(
+                model_path,
+                device="cpu",
+                truncate_dim=EMBEDDING_DIM,
+                backend="torch",
+                local_files_only=True,
+                model_kwargs={
+                    "torch_dtype": "float32",
+                    # "device_map": "cpu",
+                },
+            )
             logger.info(f"Model '{model_name}' loaded successfully from {model_path}.")
         except Exception as e:
             logger.exception(f"Error loading model from {model_path}")
@@ -83,9 +58,6 @@ class EmbeddingService:
             logger.error("Attempted to get model before it was loaded. Returning RuntimeError.")
             raise RuntimeError("Model not loaded")
         return self.model
-
-
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
@@ -120,7 +92,7 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()
-        embeddings = model.encode(texts, convert_to_numpy=True)
+        embeddings = model.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
         logger.debug(f"Generated {len(embeddings)} embeddings.")
 
         # Format response to match OpenAI's format
@@ -150,19 +122,19 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
 @app.post("/v1/get_similarity")
 async def get_similarity(request: SimilarityRequest, req: Request) -> SimilarityResponse:
     """Calculate cosine similarity between two texts."""
-    logger.info(f"Received similarity request for text1: {request.text1}, text2: {request.text2}")
-    logger.debug(f"Similarity request details: {request.model_dump_json()}")
+    logger.info(f"Received similarity request for: {request.text1}, text2: {request.text2}")
+    logger.info(f"Similarity request details: {request.model_dump_json()}")
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()
-        embedding1 = model.encode([request.text1], convert_to_numpy=True)[0]
-        embedding2 = model.encode(request.text2, convert_to_numpy=True)
+        embedding1 = model.encode([request.text1], convert_to_numpy=True, normalize_embeddings=True)
+        embedding2 = model.encode(request.text2, convert_to_numpy=True, normalize_embeddings=True)
 
         similarities = model.similarity(embedding1, embedding2).tolist()
-        logger.debug(f"Calculated similarities: {similarities}")
+        logger.info(f"Calculated similarities: {similarities}")
 
         response = SimilarityResponse(similarity_score=similarities[0])
-        logger.debug(f"Similarity response: {response.model_dump_json()}")
+        logger.info(f"Similarity response: {response.model_dump_json()}")
         return response
 
     except Exception as e:

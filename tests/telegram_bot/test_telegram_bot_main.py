@@ -196,9 +196,7 @@ async def test_start_new_game():
         mock_load_words.return_value = ["word1", "word2", "word3"]
         mock_word_manager.return_value.get_current_words.return_value = ["word1", "word2"]
         mock_embedding_client.return_value.__aenter__.return_value = None
-        mock_word_manager.return_value.target_words_count = (
-            TEST_TARGET_WORDS_COUNT  # Set target_words_count
-        )
+        mock_word_manager.return_value.target_words_count = TEST_TARGET_WORDS_COUNT  # Set target_words_count
         mock_word_game.return_value = MagicMock()
 
         # Call the function to be tested

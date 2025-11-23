@@ -27,9 +27,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.info(f"User {user_id} initiated /start command.")
 
     if user_id in active_games:
-        logger.warning(
-            f"User {user_id} tried to start a new game while one is active. Not starting a new game."
-        )
+        logger.warning(f"User {user_id} tried to start a new game while one is active. Not starting a new game.")
         await update.message.reply_text(
             "You already have an active game! Use /stop to end it first.",
             reply_markup=STOP_KEYBOARD,
@@ -71,9 +69,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await client.__aexit__(None, None, None)  # Properly close the client
         del active_games[user_id]
         logger.info(f"Game successfully stopped for user {user_id}.")
-        await update.message.reply_text(
-            "Game stopped. Use /start to begin a new game!", reply_markup=START_KEYBOARD
-        )
+        await update.message.reply_text("Game stopped. Use /start to begin a new game!", reply_markup=START_KEYBOARD)
     else:
         logger.warning(f"User {user_id} tried to stop a game that wasn't active. No game to stop.")
         await update.message.reply_text(
@@ -129,9 +125,7 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     except Exception:
         logger.exception(f"Error processing word '{user_word}' for user {user_id}.")
-        await update.message.reply_text(
-            "Sorry, there was an error processing your word. Please try again."
-        )
+        await update.message.reply_text("Sorry, there was an error processing your word. Please try again.")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

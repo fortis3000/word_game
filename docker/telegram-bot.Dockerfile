@@ -6,4 +6,4 @@ COPY pyproject.toml uv.lock ./
 COPY src/ /app/src/
 COPY dicts/ /app/dicts/
 
-RUN uv venv && . .venv/bin/activate && uv sync --extra telegram --extra game
+RUN uv venv && . .venv/bin/activate && uv sync --extra telegram

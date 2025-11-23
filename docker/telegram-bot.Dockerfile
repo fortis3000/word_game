@@ -1,12 +1,9 @@
 FROM python:3.13-slim
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY environment/telegram-bot-requirements.txt /tmp/requirements.txt
-
-RUN uv venv
-RUN uv pip install -r /tmp/requirements.txt
-
 WORKDIR /app
-
+COPY pyproject.toml uv.lock ./
 COPY src/ /app/src/
 COPY dicts/ /app/dicts/
+
+RUN uv venv && . .venv/bin/activate && uv sync --extra telegram --extra game

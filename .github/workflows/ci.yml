@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
 
       - name: Install linting dependencies
-        run: uv pip sync --only-group lint
+        run: uv sync --only-group lint
 
       - name: Checking linting with ruff
         run: ruff check .
@@ -68,7 +68,7 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
 
       - name: Install dependencies
-        run: uv pip sync --only-group test
+        run: uv sync --only-group test
 
       - name: Run tests with pytest and coverage
         run: |

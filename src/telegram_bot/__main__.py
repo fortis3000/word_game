@@ -4,7 +4,13 @@ import os
 from typing import Dict
 
 from telegram import ReplyKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 from src.game.main import WordGame, WordManager, load_words
 from src.shared.embedding_client import EmbeddingClient
@@ -77,7 +83,8 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         logger.warning(f"User {user_id} tried to stop a game that wasn't active. No game to stop.")
         await update.message.reply_text(
-            "You don't have an active game. Use /start to begin!", reply_markup=START_KEYBOARD
+            "You don't have an active game. Use /start to begin!",
+            reply_markup=START_KEYBOARD,
         )
 
 
@@ -92,7 +99,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             f"User {user_id} submitted word '{user_word}' without an active game. Prompting to start a game."
         )
         await update.message.reply_text(
-            "You don't have an active game. Use /start to begin!", reply_markup=START_KEYBOARD
+            "You don't have an active game. Use /start to begin!",
+            reply_markup=START_KEYBOARD,
         )
         return
 

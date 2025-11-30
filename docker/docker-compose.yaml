@@ -13,7 +13,8 @@ services:
       - "8000:8000"
     volumes:
       - ../models/embeddinggemma300:/app/model
-    # TODO: transfer commands from dockerfiles to here
+    environment:
+      MODEL_PATH: /app/model
     healthcheck:
       # TODO: improve healthcheck endpoint in embedding service
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -21,6 +22,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    command:
+      [
+        "uv",
+        "run",
+        "uvicorn",
+        "src.embedding_service.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+      ]
 
   telegram-bot:
     build:
@@ -37,3 +49,4 @@ services:
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000
     volumes:
       - ../data:/app/data
+    command: ["uv", "run", "python", "-m", "src.telegram_bot"]

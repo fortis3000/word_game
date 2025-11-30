@@ -96,7 +96,8 @@ async def test_handle_word_no_active_game():
         await handle_word(update, context)
 
         update.message.reply_text.assert_called_once_with(
-            "You don't have an active game. Use /start to begin!", reply_markup=START_KEYBOARD
+            "You don't have an active game. Use /start to begin!",
+            reply_markup=START_KEYBOARD,
         )
 
 
@@ -173,7 +174,8 @@ async def test_stop_no_active_game():
 
         # Assert that the appropriate message is sent
         update.message.reply_text.assert_called_once_with(
-            "You don't have an active game. Use /start to begin!", reply_markup=START_KEYBOARD
+            "You don't have an active game. Use /start to begin!",
+            reply_markup=START_KEYBOARD,
         )
 
 
@@ -194,7 +196,10 @@ async def test_start_new_game():
     ):
         # Mock the return values of the patched objects
         mock_load_words.return_value = ["word1", "word2", "word3"]
-        mock_word_manager.return_value.get_current_words.return_value = ["word1", "word2"]
+        mock_word_manager.return_value.get_current_words.return_value = [
+            "word1",
+            "word2",
+        ]
         mock_embedding_client.return_value.__aenter__.return_value = None
         mock_word_manager.return_value.target_words_count = (
             TEST_TARGET_WORDS_COUNT  # Set target_words_count

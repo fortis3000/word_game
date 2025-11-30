@@ -52,7 +52,7 @@ class EmbeddingClient:
                 f"EmbeddingClient: Received raw response (status: {response.status_code}): {response.text}"
             )
             response.raise_for_status()
-            json_response = await response.json()
+            json_response = response.json()
             logger.debug(f"EmbeddingClient: Parsed JSON response: {json_response}")
             logger.info(f"EmbeddingClient: Successfully retrieved similarities for '{user_word}'.")
             return json_response["similarity_score"]

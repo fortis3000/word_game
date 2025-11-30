@@ -103,7 +103,8 @@ def test_word_manager_init_game(sample_words):
 
 def test_word_manager_init_game_not_enough_words(sample_words):
     manager = WordManager(
-        {TEST_WORD_ID_0: "one", TEST_WORD_ID_1: "two"}, target_words_count=TEST_TARGET_WORDS_COUNT
+        {TEST_WORD_ID_0: "one", TEST_WORD_ID_1: "two"},
+        target_words_count=TEST_TARGET_WORDS_COUNT,
     )
     manager.init_game()
     assert len(manager.current_words) == TEST_TWO_WORDS
@@ -303,7 +304,9 @@ def mock_word_manager(sample_words):
 
 def test_word_game_init(mock_word_manager, mock_embedding_client):
     game = WordGame(
-        mock_word_manager, mock_embedding_client, similarity_threshold=TEST_SIMILARITY_THRESHOLD
+        mock_word_manager,
+        mock_embedding_client,
+        similarity_threshold=TEST_SIMILARITY_THRESHOLD,
     )
     assert game.manager == mock_word_manager
     assert game.embedding_client == mock_embedding_client
@@ -330,7 +333,9 @@ async def test_word_game_calculate_similarities(mock_embedding_client):
 @pytest.mark.asyncio
 async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
     game = WordGame(
-        mock_word_manager, mock_embedding_client, similarity_threshold=TEST_SIMILARITY_THRESHOLD
+        mock_word_manager,
+        mock_embedding_client,
+        similarity_threshold=TEST_SIMILARITY_THRESHOLD,
     )
     user_word = "test_word"
 
@@ -374,7 +379,9 @@ async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
 @pytest.mark.asyncio
 async def test_word_game_play_round_game_over(mock_word_manager, mock_embedding_client):
     game = WordGame(
-        mock_word_manager, mock_embedding_client, similarity_threshold=TEST_SIMILARITY_THRESHOLD
+        mock_word_manager,
+        mock_embedding_client,
+        similarity_threshold=TEST_SIMILARITY_THRESHOLD,
     )
     user_word = "test_word"
 

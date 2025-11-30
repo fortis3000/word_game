@@ -1,15 +1,9 @@
-import os
-import sys
 from http import HTTPStatus
 
 import pytest
 from fastapi.testclient import TestClient
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../src/embedding_service"))
-)
-
-from main import app
+from src.embedding_service.main import app
 
 # Constants for testing
 SIMILARITY_SCORE = 0.85
@@ -30,7 +24,11 @@ def test_health_check(test_client):
     """Test the health check endpoint."""
     response = test_client.get("/health")
     assert response.status_code == HTTP_OK
-    assert response.json() == {"status": "healthy", "model": "loaded", "version": "1.0.0"}
+    assert response.json() == {
+        "status": "healthy",
+        "model": "loaded",
+        "version": "1.0.0",
+    }
 
 
 def test_create_embedding_single_string(test_client):

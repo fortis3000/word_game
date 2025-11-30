@@ -102,7 +102,10 @@ def test_word_manager_init_game(sample_words):
 
 
 def test_word_manager_init_game_not_enough_words(sample_words):
-    manager = WordManager({TEST_WORD_ID_0: "one", TEST_WORD_ID_1: "two"}, target_words_count=TEST_TARGET_WORDS_COUNT)
+    manager = WordManager(
+        {TEST_WORD_ID_0: "one", TEST_WORD_ID_1: "two"},
+        target_words_count=TEST_TARGET_WORDS_COUNT,
+    )
     manager.init_game()
     assert len(manager.current_words) == TEST_TWO_WORDS
     assert len(manager.seen_words) == TEST_TWO_WORDS
@@ -188,7 +191,9 @@ def test_word_manager_process_guess_max_remove_limit(sample_words):
         TEST_SIMILARITY_LOW,
         TEST_SIMILARITY_LOW,
     ]
-    removed, added = manager.process_guess(similarities, threshold=TEST_SIMILARITY_THRESHOLD, max_remove=TEST_TWO_WORDS)
+    removed, added = manager.process_guess(
+        similarities, threshold=TEST_SIMILARITY_THRESHOLD, max_remove=TEST_TWO_WORDS
+    )
 
     assert len(removed) == TEST_TWO_WORDS
     assert "apple" in removed
@@ -219,7 +224,9 @@ def test_word_manager_process_guess_below_threshold(sample_words):
         TEST_SIMILARITY_LOW,
         TEST_SIMILARITY_LOW,
     ]
-    removed, added = manager.process_guess(similarities, threshold=TEST_SIMILARITY_0_5, max_remove=TEST_MAX_REMOVE)
+    removed, added = manager.process_guess(
+        similarities, threshold=TEST_SIMILARITY_0_5, max_remove=TEST_MAX_REMOVE
+    )
 
     assert not removed
     assert not added
@@ -296,7 +303,11 @@ def mock_word_manager(sample_words):
 
 
 def test_word_game_init(mock_word_manager, mock_embedding_client):
-    game = WordGame(mock_word_manager, mock_embedding_client, similarity_threshold=TEST_SIMILARITY_THRESHOLD)
+    game = WordGame(
+        mock_word_manager,
+        mock_embedding_client,
+        similarity_threshold=TEST_SIMILARITY_THRESHOLD,
+    )
     assert game.manager == mock_word_manager
     assert game.embedding_client == mock_embedding_client
     assert game.threshold == TEST_SIMILARITY_THRESHOLD
@@ -321,7 +332,11 @@ async def test_word_game_calculate_similarities(mock_embedding_client):
 
 @pytest.mark.asyncio
 async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
-    game = WordGame(mock_word_manager, mock_embedding_client, similarity_threshold=TEST_SIMILARITY_THRESHOLD)
+    game = WordGame(
+        mock_word_manager,
+        mock_embedding_client,
+        similarity_threshold=TEST_SIMILARITY_THRESHOLD,
+    )
     user_word = "test_word"
 
     # Set up mock returns for a specific scenario
@@ -340,7 +355,9 @@ async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
     game_state = await game.play_round(user_word)
 
     mock_word_manager.get_current_words.assert_called()
-    mock_embedding_client.get_similarities.assert_called_once_with(user_word, ["apple", "banana", "orange"])
+    mock_embedding_client.get_similarities.assert_called_once_with(
+        user_word, ["apple", "banana", "orange"]
+    )
     mock_word_manager.process_guess.assert_called_once_with(
         [TEST_SIMILARITY_HIGH, TEST_SIMILARITY_MEDIUM, TEST_SIMILARITY_LOW],
         threshold=TEST_SIMILARITY_THRESHOLD,
@@ -361,7 +378,11 @@ async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
 
 @pytest.mark.asyncio
 async def test_word_game_play_round_game_over(mock_word_manager, mock_embedding_client):
-    game = WordGame(mock_word_manager, mock_embedding_client, similarity_threshold=TEST_SIMILARITY_THRESHOLD)
+    game = WordGame(
+        mock_word_manager,
+        mock_embedding_client,
+        similarity_threshold=TEST_SIMILARITY_THRESHOLD,
+    )
     user_word = "test_word"
 
     mock_word_manager.get_current_words.side_effect = [

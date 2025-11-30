@@ -38,6 +38,13 @@ dependencies = [
     "python-json-logger==2.0.7",
 ]
 
+[tool.ruff]
+line-length = 100
+exclude = [".pytest_cache", "**/__pycache__/", "**/*.ipynb_checkpoints/", "*.ipynb"]
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 include = ["/src"]

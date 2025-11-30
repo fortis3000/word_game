@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
-echo "List of changes fields comparing to master branch"
-#git diff --stat master
-export CHANGED_FILES=$(git diff --name-only --diff-filter=d master -- '***.py')
+echo "Running pre-commit hook"
 
-if [ -z "$CHANGED_FILES" ]; then
-  echo "No Python files were changed, skipping linting"
-  exit 0;
-fi
+echo "Formatting with ruff"
+uv run ruff format .
 
-echo
-ruff format $CHANGED_FILES --config pyproject.toml
-ruff check $CHANGED_FILES --fix --config pyproject.toml
+echo "Linting with ruff"
+uv run ruff check . --fix
 
-echo
 echo "Finished"

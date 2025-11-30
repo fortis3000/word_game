@@ -1,12 +1,9 @@
-.PHONY: precommit requirements_lint
-
-POETRY_PATH = poetry
-PYTHON_FILES = **/*.py *.py
-
-# Install linting requirements
-requirements_lint:
-	${POETRY_PATH} install --only codestyle
+.PHONY: precommit
 
 # Local precommit
-precommit: requirements_lint
+precommit:
 	bash ./precommit.sh
+
+# Run tests
+test:
+	uv run python -m pytest -v tests/

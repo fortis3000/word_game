@@ -31,7 +31,9 @@ class EmbeddingClient:
             "model": "embeddinggemma-300m",
             "encoding_format": "float",
         }
-        logger.info(f"EmbeddingClient: Requesting similarities from {self.api_url}/v1/get_similarity")
+        logger.info(
+            f"EmbeddingClient: Requesting similarities from {self.api_url}/v1/get_similarity"
+        )
         logger.debug(f"EmbeddingClient: Request payload: {request_payload}")
 
         if not self._client:
@@ -46,7 +48,9 @@ class EmbeddingClient:
                 json=request_payload,
                 timeout=10.0,
             )
-            logger.debug(f"EmbeddingClient: Received raw response (status: {response.status_code}): {response.text}")
+            logger.debug(
+                f"EmbeddingClient: Received raw response (status: {response.status_code}): {response.text}"
+            )
             response.raise_for_status()
             json_response = response.json()
             logger.debug(f"EmbeddingClient: Parsed JSON response: {json_response}")
@@ -56,9 +60,13 @@ class EmbeddingClient:
             logger.error(
                 f"EmbeddingClient: API returned HTTP error {e.response.status_code} for '{user_word}'. Response: {e.response.text}"
             )
-            raise RuntimeError(f"API request failed with status {e.response.status_code}: {e.response.text}") from e
+            raise RuntimeError(
+                f"API request failed with status {e.response.status_code}: {e.response.text}"
+            ) from e
         except httpx.RequestError as e:
-            logger.error(f"EmbeddingClient: An error occurred while requesting {e.request.url!r}: {e}")
+            logger.error(
+                f"EmbeddingClient: An error occurred while requesting {e.request.url!r}: {e}"
+            )
             raise RuntimeError(f"API request failed: {e}") from e
         except Exception as e:
             logger.exception(

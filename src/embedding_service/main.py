@@ -109,7 +109,10 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
             object="list",
             model=request.model,
             data=data,
-            usage={"prompt_tokens": int(total_tokens), "total_tokens": int(total_tokens)},
+            usage={
+                "prompt_tokens": int(total_tokens),
+                "total_tokens": int(total_tokens),
+            },
         )
         logger.debug(f"Embedding response: {response.model_dump_json()}")
         return response

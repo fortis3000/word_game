@@ -10,12 +10,9 @@ COPY src/ /app/src/
 
 RUN uv venv && . .venv/bin/activate && uv sync --extra embedding
 
-# Set environment variable for model path
-ENV MODEL_PATH=/app/model
-
 # Expose the port
 EXPOSE 8000
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+  CMD curl -f http://localhost:8000/health

@@ -72,7 +72,7 @@ jobs:
 
       - name: Run tests with pytest and coverage
         run: |
-          coverage run -m pytest -v tests/!(embedding_service|__pycache__)/**
+          coverage run -m pytest -v tests --ignore=tests/embedding_service --ignore=tests/__pycache__
           coverage report -m --fail-under=80
 
   build_docker_images:

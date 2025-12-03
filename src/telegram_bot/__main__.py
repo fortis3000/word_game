@@ -1,6 +1,8 @@
 """Telegram bot for running the word similarity game."""
 
+import asyncio
 import os
+import re
 from typing import Dict
 
 from telegram import ReplyKeyboardMarkup, Update
@@ -37,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"User {user_id} tried to start a new game while one is active. Not starting a new game."
         )
         await update.message.reply_text(
-            "You already have an active game! Use /stop to end it first.",
+            "⚠️ You already have an active game! Use /stop to end it first.",
             reply_markup=STOP_KEYBOARD,
         )
         return
@@ -60,9 +62,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.info(f"Game for user {user_id} initialized with words: {current_words}")
 
     await update.message.reply_text(
-        f"Welcome to the Word Similarity Game! Try to find words similar to these:\n\n"
-        f"{', '.join(current_words)}\n\n"
-        "Just type an English word to play!",
+        f"👋 Welcome to the Word Similarity Game! 🎮\n\n"
+        f"🎯 Try to find words similar to these:\n\n"
+        f"✨ {', '.join(current_words)} ✨\n\n"
+        "⌨️ Just type a German word to play! 🍀",
         reply_markup=STOP_KEYBOARD,
     )
 
@@ -78,12 +81,12 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         del active_games[user_id]
         logger.info(f"Game successfully stopped for user {user_id}.")
         await update.message.reply_text(
-            "Game stopped. Use /start to begin a new game!", reply_markup=START_KEYBOARD
+            "🛑 Game stopped. Use /start to begin a new game! 🚀", reply_markup=START_KEYBOARD
         )
     else:
         logger.warning(f"User {user_id} tried to stop a game that wasn't active. No game to stop.")
         await update.message.reply_text(
-            "You don't have an active game. Use /start to begin!",
+            "🤔 You don't have an active game. Use /start to begin! 🌟",
             reply_markup=START_KEYBOARD,
         )
 
@@ -91,7 +94,25 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle user's word submission."""
     user_id = update.effective_user.id
-    user_word = update.message.text.strip().lower()
+    user_word = update.message.text.strip()
+
+    # Validate input length
+    if len(user_word) > 50:
+        logger.warning(f"User {user_id} submitted word exceeding length limit: '{user_word}'")
+        await update.message.reply_text(
+            "🚫 Your message is too long. Please keep it under 50 characters. 📏"
+        )
+        return
+
+    # Validate characters (alphanumeric, spaces, hyphens, apostrophes)
+    if not re.match(r"^[a-zA-Z0-9\s\-\']+$", user_word):
+        logger.warning(f"User {user_id} submitted word with invalid characters: '{user_word}'")
+        await update.message.reply_text(
+            "🚫 Invalid characters detected. Please use only letters, numbers, spaces, hyphens, and apostrophes. 🔤"
+        )
+        return
+
+    user_word = user_word.lower()
     logger.info(f"User {user_id} submitted word: '{user_word}'")
 
     if user_id not in active_games:
@@ -99,7 +120,7 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             f"User {user_id} submitted word '{user_word}' without an active game. Prompting to start a game."
         )
         await update.message.reply_text(
-            "You don't have an active game. Use /start to begin!",
+            "❓ You don't have an active game. Use /start to begin! 🚀",
             reply_markup=START_KEYBOARD,
         )
         return
@@ -115,16 +136,16 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         # Prepare response message
         response_lines = [
-            f"Your word: {user_word}",
-            "\nSimilarities:",
+            f"📝 Your word: {user_word}",
+            "\n📊 Similarities:",
             *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
-            f"\nRemoved words: {', '.join(result.removed_words) if result.removed_words else 'None'}",
-            f"Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
-            f"\nCurrent words: {', '.join(result.current_words)}",
+            f"\n✨ Removed words: {', '.join(result.removed_words) if result.removed_words else 'None'}",
+            f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+            f"\n📋 Current words: {', '.join(result.current_words)}",
         ]
 
         if result.game_over:
-            response_lines.append("\nGame Over! All words have been seen!")
+            response_lines.append("\n🎉 Game Over! All words have been seen! 🏆")
             game, word_manager, client = active_games[user_id]
             await client.__aexit__(None, None, None)  # Properly close the client
             del active_games[user_id]
@@ -133,12 +154,56 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         response_text = "\n".join(response_lines)
         logger.debug(f"Sending response to user {user_id}:\n{response_text}")
 
-        await update.message.reply_text(response_text)
+        message = await update.message.reply_text(response_text)
+
+        if result.removed_words:
+            # Animation sequence
+            # Step 1: Strikethrough
+            await asyncio.sleep(1)
+            response_lines_strike = [
+                f"📝 Your word: {user_word}",
+                "\n📊 Similarities:",
+                *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
+                f"\n✨ Removed words: {'~' + ', '.join(result.removed_words) + '~'}",
+                f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+                f"\n📋 Current words: {', '.join(result.current_words)}",
+            ]
+            if result.game_over:
+                response_lines_strike.append("\n🎉 Game Over! All words have been seen! 🏆")
+            await message.edit_text("\n".join(response_lines_strike))
+
+            # Step 2: Explosion
+            await asyncio.sleep(1)
+            response_lines_explode = [
+                f"📝 Your word: {user_word}",
+                "\n📊 Similarities:",
+                *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
+                "\n✨ Removed words: 💥",
+                f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+                f"\n📋 Current words: {', '.join(result.current_words)}",
+            ]
+            if result.game_over:
+                response_lines_explode.append("\n🎉 Game Over! All words have been seen! 🏆")
+            await message.edit_text("\n".join(response_lines_explode))
+
+            # Step 3: Gone/Dust
+            await asyncio.sleep(1)
+            response_lines_final = [
+                f"📝 Your word: {user_word}",
+                "\n📊 Similarities:",
+                *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
+                "\n✨ Removed words: 💨",
+                f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+                f"\n📋 Current words: {', '.join(result.current_words)}",
+            ]
+            if result.game_over:
+                response_lines_final.append("\n🎉 Game Over! All words have been seen! 🏆")
+            await message.edit_text("\n".join(response_lines_final))
 
     except Exception:
         logger.exception(f"Error processing word '{user_word}' for user {user_id}.")
         await update.message.reply_text(
-            "Sorry, there was an error processing your word. Please try again."
+            "😵‍💫 Sorry, there was an error processing your word. Please try again. 🔄"
         )
 
 
@@ -147,13 +212,13 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_id = update.effective_user.id
     logger.info(f"User {user_id} requested /help command.")
     help_text = (
-        "Word Similarity Game Commands:\n\n"
-        "/start - Start a new game\n"
-        "/stop - Stop the current game\n"
-        "/help - Show this help message\n\n"
-        "To play, simply type English words that you think are similar to the shown words. "
+        "📚 Word Similarity Game Commands:\n\n"
+        "🟢 /start - Start a new game\n"
+        "🛑 /stop - Stop the current game\n"
+        "ℹ️ /help - Show this help message\n\n"
+        "🎮 To play, simply type English words that you think are similar to the shown words. "
         "The more similar your word is to the target words, the more likely they are to be removed "
-        "and replaced with new ones!"
+        "and replaced with new ones! 🍀"
     )
     logger.debug(f"Sending help message to user {user_id}:\n{help_text}")
     # If no active game, show start button, otherwise show stop button

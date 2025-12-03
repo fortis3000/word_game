@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY src/ /app/src/
+COPY configs/ /app/configs/
 
 RUN uv venv && . .venv/bin/activate && uv sync --extra embedding
 

@@ -89,5 +89,4 @@ venv/
 .vscode/
 
 # Hugging Face models
-.hf_token
 models/

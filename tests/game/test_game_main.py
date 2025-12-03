@@ -80,6 +80,7 @@ def test_word_manager_init(sample_words):
     manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
     assert manager.all_words == sample_words
     assert manager.target_words_count == TEST_TARGET_WORDS_COUNT
+    assert manager.total_score == 0
     assert not manager.current_words
     assert not manager.seen_words
 
@@ -150,7 +151,7 @@ def test_word_manager_process_guess(sample_words):
         TEST_SIMILARITY_LOW,
         TEST_SIMILARITY_LOW,
     ]
-    removed, added = manager.process_guess(
+    removed, added, round_score = manager.process_guess(
         similarities, threshold=TEST_SIMILARITY_THRESHOLD_ALT, max_remove=TEST_ONE_WORD
     )
 
@@ -162,6 +163,8 @@ def test_word_manager_process_guess(sample_words):
     assert "orange" in manager.get_current_words()
     assert set(manager.get_current_words()).isdisjoint(set(removed))
     assert set(manager.get_current_words()).issuperset(set(added))
+    assert round_score == int(TEST_SIMILARITY_HIGH * 100)
+    assert manager.total_score == int(TEST_SIMILARITY_HIGH * 100)
 
 
 def test_word_manager_process_guess_max_remove_limit(sample_words):
@@ -191,7 +194,7 @@ def test_word_manager_process_guess_max_remove_limit(sample_words):
         TEST_SIMILARITY_LOW,
         TEST_SIMILARITY_LOW,
     ]
-    removed, added = manager.process_guess(
+    removed, added, round_score = manager.process_guess(
         similarities, threshold=TEST_SIMILARITY_THRESHOLD, max_remove=TEST_TWO_WORDS
     )
 
@@ -200,6 +203,10 @@ def test_word_manager_process_guess_max_remove_limit(sample_words):
     assert "banana" in removed
     assert len(added) == TEST_TWO_WORDS
     assert len(manager.current_words) == TEST_TARGET_WORDS_COUNT
+    assert round_score == int(TEST_SIMILARITY_HIGH * 100) + int(TEST_SIMILARITY_MEDIUM * 100)
+    assert manager.total_score == int(TEST_SIMILARITY_HIGH * 100) + int(
+        TEST_SIMILARITY_MEDIUM * 100
+    )
 
 
 def test_word_manager_process_guess_below_threshold(sample_words):
@@ -224,7 +231,7 @@ def test_word_manager_process_guess_below_threshold(sample_words):
         TEST_SIMILARITY_LOW,
         TEST_SIMILARITY_LOW,
     ]
-    removed, added = manager.process_guess(
+    removed, added, round_score = manager.process_guess(
         similarities, threshold=TEST_SIMILARITY_0_5, max_remove=TEST_MAX_REMOVE
     )
 
@@ -232,6 +239,8 @@ def test_word_manager_process_guess_below_threshold(sample_words):
     assert not added
     assert len(manager.current_words) == TEST_TARGET_WORDS_COUNT
     assert manager.current_words == original_words
+    assert round_score == 0
+    assert manager.total_score == 0
 
 
 def test_word_manager_add_random_words(sample_words):
@@ -297,7 +306,8 @@ def mock_word_manager(sample_words):
     manager = MagicMock(spec=WordManager)
     manager.all_words = sample_words
     manager.get_current_words.return_value = ["apple", "banana", "orange"]
-    manager.process_guess.return_value = (["apple"], ["grape"])
+    manager.process_guess.return_value = (["apple"], ["grape"], 90)
+    manager.total_score = 90
     manager.is_game_over.return_value = False
     return manager
 
@@ -349,7 +359,8 @@ async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
         TEST_SIMILARITY_MEDIUM,
         TEST_SIMILARITY_LOW,
     ]
-    mock_word_manager.process_guess.return_value = (["apple"], ["grape"])
+    mock_word_manager.process_guess.return_value = (["apple"], ["grape"], 90)
+    mock_word_manager.total_score = 90
     mock_word_manager.is_game_over.return_value = False
 
     game_state = await game.play_round(user_word)
@@ -373,6 +384,8 @@ async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
         "banana": TEST_SIMILARITY_MEDIUM,
         "orange": TEST_SIMILARITY_LOW,
     }
+    assert game_state.round_score == 90
+    assert game_state.total_score == 90
     assert not game_state.game_over
 
 
@@ -394,7 +407,8 @@ async def test_word_game_play_round_game_over(mock_word_manager, mock_embedding_
         TEST_SIMILARITY_MEDIUM,
         TEST_SIMILARITY_LOW,
     ]
-    mock_word_manager.process_guess.return_value = (["apple"], ["grape"])
+    mock_word_manager.process_guess.return_value = (["apple"], ["grape"], 90)
+    mock_word_manager.total_score = 90
     mock_word_manager.is_game_over.return_value = True  # Game is over
 
     game_state = await game.play_round(user_word)

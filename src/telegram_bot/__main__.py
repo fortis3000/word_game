@@ -143,6 +143,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
             f"\n✨ Removed words: {', '.join(result.removed_words) if result.removed_words else 'None'}",
             f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+            f"\n🏆 Round Score: {result.round_score}",
+            f"🌟 Total Score: {result.total_score}",
             f"\n📋 Current words: {', '.join(result.current_words)}",
         ]
 
@@ -168,6 +170,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
                 f"\n✨ Removed words: {'~' + ', '.join(result.removed_words) + '~'}",
                 f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+                f"\n🏆 Round Score: {result.round_score}",
+                f"🌟 Total Score: {result.total_score}",
                 f"\n📋 Current words: {', '.join(result.current_words)}",
             ]
             if result.game_over:
@@ -182,6 +186,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
                 "\n✨ Removed words: 💥",
                 f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+                f"\n🏆 Round Score: {result.round_score}",
+                f"🌟 Total Score: {result.total_score}",
                 f"\n📋 Current words: {', '.join(result.current_words)}",
             ]
             if result.game_over:
@@ -196,6 +202,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
                 "\n✨ Removed words: 💨",
                 f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
+                f"\n🏆 Round Score: {result.round_score}",
+                f"🌟 Total Score: {result.total_score}",
                 f"\n📋 Current words: {', '.join(result.current_words)}",
             ]
             if result.game_over:

@@ -2,13 +2,13 @@
 
 import asyncio
 import random
-from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from pydantic import BaseModel
 
 from src.shared.embedding_client import EmbeddingClient
 from src.utils.logger import get_logger
+from src.data.loader import load_words, load_config
 
 logger = get_logger(__name__)
 
@@ -192,21 +192,12 @@ class WordGame:
         )
 
 
-def load_words(filepath: str | Path) -> Dict[int, str]:
-    """Load words from a CSV file."""
-    logger.info(f"Loading words from {filepath}")
-    with open(filepath, "r", encoding="utf-8") as f:
-        lines = f.read().splitlines()
-    words = {i: line.split(",")[1] for i, line in enumerate(lines[1:])}
-    logger.info(f"Loaded {len(words)} words.")
-    return words
-
-
 async def main():
     """Run an example game."""
     logger.info("Starting word game example.")
     # Load words
-    words = load_words("dicts/german/top1000.csv")
+    config = load_config()
+    words = load_words(config["data"]["default_dict"])
 
     # Initialize game components
     async with EmbeddingClient() as client:

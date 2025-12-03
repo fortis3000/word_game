@@ -14,7 +14,8 @@ from telegram.ext import (
     filters,
 )
 
-from src.game.main import WordGame, WordManager, load_words
+from src.game.main import WordGame, WordManager
+from src.data.loader import load_words, load_config
 from src.shared.embedding_client import EmbeddingClient
 from src.utils.logger import get_logger
 
@@ -45,7 +46,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     # Load words and initialize game components
-    words = load_words("dicts/german/top1000.csv")
+    config = load_config()
+    words = load_words(config["data"]["default_dict"])
     word_manager = WordManager(words, target_words_count=5)
 
     # Create a new client for this game

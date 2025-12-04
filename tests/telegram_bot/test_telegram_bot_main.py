@@ -72,32 +72,19 @@ async def test_handle_word_valid():
         game_over=False,
     )
 
-    with (
-        patch(
-            "src.telegram_bot.__main__.active_games",
-            {TEST_USER_ID: (mock_game, MagicMock(), MagicMock())},
-        ),
-        patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+    with patch(
+        "src.telegram_bot.__main__.active_games",
+        {TEST_USER_ID: (mock_game, MagicMock(), MagicMock())},
     ):
         await handle_word(update, context)
 
         mock_game.play_round.assert_called_once_with("testword")
         update.message.reply_text.assert_called_once()
 
-        # Verify initial response
+        # Verify response
         call_args = update.message.reply_text.call_args[0][0]
         assert "📝 Your word: testword" in call_args
-        assert "✨ Removed words: word2" in call_args
-
-        # Verify animation sequence (3 sleeps, 3 edits)
-        assert mock_sleep.call_count == 3
-        assert mock_sent_message.edit_text.call_count == 3
-
-        # Check content of edits
-        edit_calls = mock_sent_message.edit_text.call_args_list
-        assert "~word2~" in edit_calls[0][0][0]  # Strikethrough
-        assert "💥" in edit_calls[1][0][0]  # Explosion
-        assert "💨" in edit_calls[2][0][0]  # Dust
+        assert "✨ Removed words: ~word2~" in call_args
 
 
 @pytest.mark.asyncio
@@ -317,7 +304,7 @@ async def test_handle_word_german_chars():
         await handle_word(update, context)
 
         # Should proceed to play_round
-        mock_game.play_round.assert_called_once_with("müller-straßenbahn")
+        mock_game.play_round.assert_called_once_with("Müller-Straßenbahn")
         update.message.reply_text.assert_called_once()
 
 

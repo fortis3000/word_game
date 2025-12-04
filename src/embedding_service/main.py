@@ -43,7 +43,7 @@ class EmbeddingService:
                 backend="torch",
                 local_files_only=True,
                 model_kwargs={
-                    "torch_dtype": "float32",
+                    "dtype": "float32",
                     # "device_map": "cpu",
                 },
             )

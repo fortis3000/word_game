@@ -61,7 +61,7 @@ class WordManager:
 
     def process_guess(
         self, similarities: List[float], threshold: float = 0.5, max_remove: int = 3
-    ) -> Tuple[List[str], List[str]]:
+    ) -> Tuple[List[str], List[str], int]:
         """Process user's guess and update game state.
 
         Args:

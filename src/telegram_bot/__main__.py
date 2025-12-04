@@ -32,6 +32,8 @@ message_manager = MessageManager()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
+    if not update.message or not update.effective_user:
+        return
     user_id = update.effective_user.id
     logger.info(f"User {user_id} initiated /start command.")
 
@@ -51,7 +53,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     word_manager = WordManager(words, target_words_count=5)
 
     # Create a new client for this game
-    client = EmbeddingClient(api_url=os.getenv("EMBEDDING_SERVICE_URL"))
+    client = EmbeddingClient(api_url=os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8000"))
     await client.__aenter__()  # Initialize the client
 
     game = WordGame(word_manager, client)
@@ -75,6 +77,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Stop the current game."""
+    if not update.message or not update.effective_user:
+        return
     user_id = update.effective_user.id
     logger.info(f"User {user_id} initiated /stop command.")
 
@@ -97,7 +101,11 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle user's word submission."""
+    if not update.message or not update.effective_user:
+        return
     user_id = update.effective_user.id
+    if not update.message.text:
+        return
     user_word = update.message.text.strip()
 
     # Validate input length
@@ -184,6 +192,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
+    if not update.message or not update.effective_user:
+        return
     user_id = update.effective_user.id
     logger.info(f"User {user_id} requested /help command.")
     help_text = message_manager.get_message("help_message", update.effective_user.language_code)
@@ -197,7 +207,10 @@ def main() -> None:
     """Start the bot."""
     logger.info("Telegram bot application starting up.")
     # Create the Application
-    application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
+    application = Application.builder().token(token).build()
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))

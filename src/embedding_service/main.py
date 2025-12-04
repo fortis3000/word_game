@@ -25,8 +25,7 @@ class EmbeddingService:
     """Service class for managing the embedding model."""
 
     def __init__(self):
-        self.model: SentenceTransformer
-        self.model = None
+        self.model: SentenceTransformer | None = None
         logger.info("EmbeddingService initialized.")
 
     async def load_model(self):

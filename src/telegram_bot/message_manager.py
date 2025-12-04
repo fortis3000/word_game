@@ -25,7 +25,7 @@ class MessageManager:
             logger.error(f"Error loading messages from {self.locales_path}: {e}")
             return {}
 
-    def get_message(self, key: str, lang: str = None, **kwargs) -> str:
+    def get_message(self, key: str, lang: str | None = None, **kwargs) -> str:
         if not lang or lang not in self.messages:
             lang = self.default_lang
 

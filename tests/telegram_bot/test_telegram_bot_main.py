@@ -278,8 +278,8 @@ async def test_handle_word_invalid_chars():
     """Test handle_word with invalid characters."""
     update = MagicMock()
     update.effective_user.id = TEST_USER_ID
-    # Invalid characters: emojis, special symbols
-    update.message.text = "hello!@#"
+    # Invalid characters: numbers, special symbols
+    update.message.text = "hello123"
     update.message.reply_text = AsyncMock()
 
     context = MagicMock()
@@ -289,6 +289,36 @@ async def test_handle_word_invalid_chars():
     update.message.reply_text.assert_called_once_with(
         "🚫 Invalid characters detected. Please use only letters, numbers, spaces, hyphens, and apostrophes. 🔤"
     )
+
+
+@pytest.mark.asyncio
+async def test_handle_word_german_chars():
+    """Test handle_word with German characters."""
+    update = MagicMock()
+    update.effective_user.id = TEST_USER_ID
+    update.message.text = "Müller-Straßenbahn"
+    update.message.reply_text = AsyncMock()
+
+    context = MagicMock()
+    mock_game = MagicMock()
+    mock_game.play_round = AsyncMock()
+    mock_game.play_round.return_value = MagicMock(
+        similarities={"word1": TEST_SIMILARITY_SCORE},
+        removed_words=[],
+        added_words=[],
+        current_words=["word1"],
+        game_over=False,
+    )
+
+    with patch(
+        "src.telegram_bot.__main__.active_games",
+        {TEST_USER_ID: (mock_game, MagicMock(), MagicMock())},
+    ):
+        await handle_word(update, context)
+
+        # Should proceed to play_round
+        mock_game.play_round.assert_called_once_with("müller-straßenbahn")
+        update.message.reply_text.assert_called_once()
 
 
 @pytest.mark.asyncio

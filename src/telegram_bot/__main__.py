@@ -107,7 +107,7 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     # Validate characters (alphanumeric, spaces, hyphens, apostrophes)
-    if not re.match(r"^[a-zA-Z0-9\s\-\']+$", user_word):
+    if not re.match(r"^[a-zA-ZäöüÄÖÜß\s\-\']+$", user_word):
         logger.warning(f"User {user_id} submitted word with invalid characters: '{user_word}'")
         await update.message.reply_text(
             "🚫 Invalid characters detected. Please use only letters, numbers, spaces, hyphens, and apostrophes. 🔤"
@@ -139,8 +139,6 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         # Prepare response message
         response_lines = [
             f"📝 Your word: {user_word}",
-            "\n📊 Similarities:",
-            *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
             f"\n✨ Removed words: {', '.join(result.removed_words) if result.removed_words else 'None'}",
             f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
             f"\n🏆 Round Score: {result.round_score}",
@@ -161,54 +159,18 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         message = await update.message.reply_text(response_text)
 
         if result.removed_words:
-            # Animation sequence
-            # Step 1: Strikethrough
             await asyncio.sleep(1)
             response_lines_strike = [
                 f"📝 Your word: {user_word}",
-                "\n📊 Similarities:",
-                *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
                 f"\n✨ Removed words: {'~' + ', '.join(result.removed_words) + '~'}",
                 f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
-                f"\n🏆 Round Score: {result.round_score}",
-                f"🌟 Total Score: {result.total_score}",
+                f"\n🌟 Round Score: {result.round_score}",
+                f"🏆 Total Score: {result.total_score}",
                 f"\n📋 Current words: {', '.join(result.current_words)}",
             ]
             if result.game_over:
                 response_lines_strike.append("\n🎉 Game Over! All words have been seen! 🏆")
             await message.edit_text("\n".join(response_lines_strike))
-
-            # Step 2: Explosion
-            await asyncio.sleep(1)
-            response_lines_explode = [
-                f"📝 Your word: {user_word}",
-                "\n📊 Similarities:",
-                *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
-                "\n✨ Removed words: 💥",
-                f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
-                f"\n🏆 Round Score: {result.round_score}",
-                f"🌟 Total Score: {result.total_score}",
-                f"\n📋 Current words: {', '.join(result.current_words)}",
-            ]
-            if result.game_over:
-                response_lines_explode.append("\n🎉 Game Over! All words have been seen! 🏆")
-            await message.edit_text("\n".join(response_lines_explode))
-
-            # Step 3: Gone/Dust
-            await asyncio.sleep(1)
-            response_lines_final = [
-                f"📝 Your word: {user_word}",
-                "\n📊 Similarities:",
-                *[f"{word}: {sim:.3f}" for word, sim in result.similarities.items()],
-                "\n✨ Removed words: 💨",
-                f"🆕 Added words: {', '.join(result.added_words) if result.added_words else 'None'}",
-                f"\n🏆 Round Score: {result.round_score}",
-                f"🌟 Total Score: {result.total_score}",
-                f"\n📋 Current words: {', '.join(result.current_words)}",
-            ]
-            if result.game_over:
-                response_lines_final.append("\n🎉 Game Over! All words have been seen! 🏆")
-            await message.edit_text("\n".join(response_lines_final))
 
     except Exception:
         logger.exception(f"Error processing word '{user_word}' for user {user_id}.")

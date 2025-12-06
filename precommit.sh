@@ -7,4 +7,7 @@ uv run ruff format .
 echo "Linting with ruff"
 uv run ruff check . --fix
 
+echo "Type checking with ty"
+uvx ty check .
+
 echo "Finished"

@@ -5,6 +5,7 @@ import re
 from typing import Dict
 
 from telegram import ReplyKeyboardMarkup, Update
+from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -12,6 +13,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.helpers import escape_markdown
 
 from src.game.main import WordGame, WordManager
 from src.data.loader import load_words, load_config
@@ -44,6 +46,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             message_manager.get_message("already_active_game", update.effective_user.language_code),
             reply_markup=STOP_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
@@ -65,13 +68,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     current_words = word_manager.get_current_words()
     logger.info(f"Game for user {user_id} initialized with words: {current_words}")
 
+    # Escape words for proper markdown rendering
+    current_words_escaped = [escape_markdown(w, version=2) for w in current_words]
+
     await update.message.reply_text(
         message_manager.get_message(
             "welcome_message",
             update.effective_user.language_code,
-            current_words=", ".join(current_words),
+            current_words=", ".join(current_words_escaped),
         ),
         reply_markup=STOP_KEYBOARD,
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 
@@ -84,18 +91,33 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if user_id in active_games:
         game, word_manager, client = active_games[user_id]
+
+        # Capture stats before closing
+        total_score = word_manager.total_score
+        seen_count = len(word_manager.seen_words)
+
         await client.__aexit__(None, None, None)  # Properly close the client
         del active_games[user_id]
         logger.info(f"Game successfully stopped for user {user_id}.")
+
+        summary_text = message_manager.get_message(
+            "game_summary",
+            update.effective_user.language_code,
+            total_score=total_score,
+            seen_count=seen_count,
+        )
+
         await update.message.reply_text(
-            message_manager.get_message("game_stopped", update.effective_user.language_code),
+            summary_text,
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
     else:
         logger.warning(f"User {user_id} tried to stop a game that wasn't active. No game to stop.")
         await update.message.reply_text(
             message_manager.get_message("no_active_game_stop", update.effective_user.language_code),
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -112,7 +134,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if len(user_word) > 50:
         logger.warning(f"User {user_id} submitted word exceeding length limit: '{user_word}'")
         await update.message.reply_text(
-            message_manager.get_message("input_too_long", update.effective_user.language_code)
+            message_manager.get_message("input_too_long", update.effective_user.language_code),
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
@@ -120,7 +143,8 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not re.match(r"^[a-zA-ZäöüÄÖÜß\s\-\']+$", user_word):
         logger.warning(f"User {user_id} submitted word with invalid characters: '{user_word}'")
         await update.message.reply_text(
-            message_manager.get_message("invalid_characters", update.effective_user.language_code)
+            message_manager.get_message("invalid_characters", update.effective_user.language_code),
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
@@ -133,6 +157,7 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(
             message_manager.get_message("no_active_game_play", update.effective_user.language_code),
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
@@ -147,13 +172,20 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         # Prepare response message
         lang = update.effective_user.language_code
+
+        # Escape dynamic variables
+        user_word_escaped = escape_markdown(user_word, version=2)
+        removed_words_escaped = [escape_markdown(w, version=2) for w in result.removed_words]
+        added_words_escaped = [escape_markdown(w, version=2) for w in result.added_words]
+        current_words_escaped = [escape_markdown(w, version=2) for w in result.current_words]
+
         removed_words_text = (
-            ", ".join(result.removed_words)
+            ", ".join(removed_words_escaped)
             if result.removed_words
             else message_manager.get_message("none", lang)
         )
         added_words_text = (
-            ", ".join(result.added_words)
+            ", ".join(added_words_escaped)
             if result.added_words
             else message_manager.get_message("none", lang)
         )
@@ -161,15 +193,24 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         # Choose message key based on whether words were removed
         message_key = "round_result_strike" if result.removed_words else "round_result"
 
+        # Generate feedback
+        if result.removed_words:
+            feedback = message_manager.get_message(
+                "feedback_good", lang, count=len(result.removed_words)
+            )
+        else:
+            feedback = message_manager.get_message("feedback_bad", lang)
+
         response_text = message_manager.get_message(
             message_key,
             lang,
-            user_word=user_word,
+            feedback=feedback,
+            user_word=user_word_escaped,
             removed_words=removed_words_text,
             added_words=added_words_text,
             round_score=result.round_score,
             total_score=result.total_score,
-            current_words=", ".join(result.current_words),
+            current_words=", ".join(current_words_escaped),
         )
 
         if result.game_over:
@@ -181,12 +222,13 @@ async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         logger.debug(f"Sending response to user {user_id}:\n{response_text}")
 
-        await update.message.reply_text(response_text)
+        await update.message.reply_text(response_text, parse_mode=ParseMode.MARKDOWN_V2)
 
     except Exception:
         logger.exception(f"Error processing word '{user_word}' for user {user_id}.")
         await update.message.reply_text(
-            message_manager.get_message("error_processing", update.effective_user.language_code)
+            message_manager.get_message("error_processing", update.effective_user.language_code),
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -200,7 +242,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     logger.debug(f"Sending help message to user {user_id}:\n{help_text}")
     # If no active game, show start button, otherwise show stop button
     keyboard = STOP_KEYBOARD if update.effective_user.id in active_games else START_KEYBOARD
-    await update.message.reply_text(help_text, reply_markup=keyboard)
+    await update.message.reply_text(
+        help_text, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+    )
 
 
 def main() -> None:

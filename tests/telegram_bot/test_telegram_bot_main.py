@@ -11,6 +11,7 @@ from src.telegram_bot.__main__ import (
     start,
     stop,
 )
+from telegram.constants import ParseMode
 
 # Constants for testing
 TEST_USER_ID = 123
@@ -32,8 +33,9 @@ async def test_help_command():
         await help_command(update, context)
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        assert "📚 Word Similarity Game Commands:" in call_args[0][0]
+        assert "📚 *Word Similarity Game Commands*" in call_args[0][0]
         assert call_args[1]["reply_markup"] == START_KEYBOARD
+        assert call_args[1]["parse_mode"] == ParseMode.MARKDOWN_V2
 
     update.message.reply_text.reset_mock()
 
@@ -45,8 +47,9 @@ async def test_help_command():
         await help_command(update, context)
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        assert "📚 Word Similarity Game Commands:" in call_args[0][0]
+        assert "📚 *Word Similarity Game Commands*" in call_args[0][0]
         assert call_args[1]["reply_markup"] == STOP_KEYBOARD
+        assert call_args[1]["parse_mode"] == ParseMode.MARKDOWN_V2
 
 
 @pytest.mark.asyncio
@@ -83,8 +86,11 @@ async def test_handle_word_valid():
 
         # Verify response
         call_args = update.message.reply_text.call_args[0][0]
-        assert "📝 Your word: testword" in call_args
+        kwargs = update.message.reply_text.call_args[1]
+        assert "📝 Your word: *testword*" in call_args
         assert "✨ Removed words: ~word2~" in call_args
+        assert "🎉 *Nice shot\\!*" in call_args
+        assert kwargs["parse_mode"] == ParseMode.MARKDOWN_V2
 
 
 @pytest.mark.asyncio
@@ -101,8 +107,9 @@ async def test_handle_word_no_active_game():
         await handle_word(update, context)
 
         update.message.reply_text.assert_called_once_with(
-            "❓ You don't have an active game. Use /start to begin! 🚀",
+            "❓ You don't have an active game\\. Use /start to begin\\! 🚀",
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -136,7 +143,9 @@ async def test_handle_word_game_over():
         mock_game.play_round.assert_called_once_with("testword")
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args[0][0]
-        assert "🎉 Game Over!" in call_args
+        kwargs = update.message.reply_text.call_args[1]
+        assert "🎉 *Game Over\\!*" in call_args
+        assert kwargs["parse_mode"] == ParseMode.MARKDOWN_V2
         assert TEST_USER_ID not in active_games
 
 
@@ -152,16 +161,25 @@ async def test_stop_active_game():
     mock_client.__aexit__ = AsyncMock()
 
     # Simulate an active game for the user
+    mock_word_manager = MagicMock()
+    mock_word_manager.total_score = 100
+    mock_word_manager.seen_words = {"word1", "word2"}
+
     with patch(
         "src.telegram_bot.__main__.active_games",
-        {TEST_USER_ID: (MagicMock(), MagicMock(), mock_client)},
+        {TEST_USER_ID: (MagicMock(), mock_word_manager, mock_client)},
     ):
         await stop(update, context)
 
         # Assert that the game is stopped and the appropriate message is sent
-        update.message.reply_text.assert_called_once_with(
-            "🛑 Game stopped. Use /start to begin a new game! 🚀", reply_markup=START_KEYBOARD
-        )
+        update.message.reply_text.assert_called_once()
+        call_args = update.message.reply_text.call_args[0][0]
+        kwargs = update.message.reply_text.call_args[1]
+        # assert "🛑 Game stopped." in call_args  # Removed in favor of Game Summary
+        assert "🏁 *Game Summary*" in call_args
+        assert "🏆 Final Score: 100" in call_args
+        assert "📚 Words Encountered: 2" in call_args
+        assert kwargs["parse_mode"] == ParseMode.MARKDOWN_V2
         assert TEST_USER_ID not in active_games
 
 
@@ -179,8 +197,9 @@ async def test_stop_no_active_game():
 
         # Assert that the appropriate message is sent
         update.message.reply_text.assert_called_once_with(
-            "🤔 You don't have an active game. Use /start to begin! 🌟",
+            "🤔 You don't have an active game\\. Use /start to begin\\! 🌟",
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -216,6 +235,9 @@ async def test_start_new_game():
 
         # Assert that the reply_text method was called with the welcome message
         update.message.reply_text.assert_called_once()
+        call_args = update.message.reply_text.call_args
+        assert "parse_mode" in call_args[1]
+        assert call_args[1]["parse_mode"] == ParseMode.MARKDOWN_V2
 
 
 @pytest.mark.asyncio
@@ -236,8 +258,9 @@ async def test_start_game_already_active():
 
         # Assert that the appropriate message is sent
         update.message.reply_text.assert_called_once_with(
-            "⚠️ You already have an active game! Use /stop to end it first.",
+            "⚠️ You already have an active game\\! Use /stop to end it first\\.",
             reply_markup=STOP_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -256,7 +279,8 @@ async def test_handle_word_too_long():
     await handle_word(update, context)
 
     update.message.reply_text.assert_called_once_with(
-        "🚫 Your message is too long. Please keep it under 50 characters. 📏"
+        "🚫 Your message is too long\\. Please keep it under 50 characters\\. 📏",
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 
@@ -274,7 +298,8 @@ async def test_handle_word_invalid_chars():
     await handle_word(update, context)
 
     update.message.reply_text.assert_called_once_with(
-        "🚫 Invalid characters detected. Please use only letters, numbers, spaces, hyphens, and apostrophes. 🔤"
+        "🚫 Invalid characters\\. Please use only letters, numbers, spaces, hyphens/apostrophes\\. 🔤",
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 

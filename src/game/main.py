@@ -2,13 +2,13 @@
 
 import asyncio
 import random
-from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from pydantic import BaseModel
 
 from src.shared.embedding_client import EmbeddingClient
 from src.utils.logger import get_logger
+from src.data.loader import load_words, load_config
 
 logger = get_logger(__name__)
 
@@ -27,6 +27,7 @@ class WordManager:
         self.current_words: Set[int] = set()
         self.seen_words: Set[int] = set()
         self.target_words_count = target_words_count
+        self.total_score = 0
         logger.info(
             f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}"
         )
@@ -60,7 +61,7 @@ class WordManager:
 
     def process_guess(
         self, similarities: List[float], threshold: float = 0.5, max_remove: int = 3
-    ) -> Tuple[List[str], List[str]]:
+    ) -> Tuple[List[str], List[str], int]:
         """Process user's guess and update game state.
 
         Args:
@@ -69,7 +70,7 @@ class WordManager:
             max_remove: Maximum number of words to remove
 
         Returns:
-            tuple: (removed_words, added_words)
+            tuple: (removed_words, added_words, round_score)
         """
         logger.debug(
             f"Processing guess with similarities: {similarities}, threshold: {threshold}, max_remove: {max_remove}"
@@ -100,12 +101,22 @@ class WordManager:
         # Update current words
         self.current_words -= removed_ids
 
+        # Calculate score
+        round_score = 0
+        for word_id, score in word_scores:
+            if word_id in removed_ids:
+                round_score += int(score * 100)
+
+        self.total_score += round_score
+
         # Add new random words
         removed_words = [self.all_words[k] for k in removed_ids]
         new_words = self._add_random_words()
-        logger.info(f"Processed guess. Removed words: {removed_words}, Added words: {new_words}")
+        logger.info(
+            f"Processed guess. Removed words: {removed_words}, Added words: {new_words}, Round score: {round_score}, Total score: {self.total_score}"
+        )
 
-        return removed_words, new_words
+        return removed_words, new_words, round_score
 
     def _add_random_words(self) -> List[str]:
         """Add random words to maintain target count."""
@@ -145,6 +156,8 @@ class GameState(BaseModel):
     removed_words: List[str]
     added_words: List[str]
     similarities: Dict[str, float]
+    round_score: int
+    total_score: int
     game_over: bool
 
 
@@ -178,35 +191,30 @@ class WordGame:
         logger.debug(f"Current words in play for similarity calculation: {current_words}")
         similarities = await self.calculate_similarities(user_word, current_words)
 
-        removed_words, added_words = self.manager.process_guess(
+        removed_words, added_words, round_score = self.manager.process_guess(
             similarities, threshold=self.threshold
         )
-        logger.info(f"Round finished. Words removed: {removed_words}, Words added: {added_words}")
+        logger.info(
+            f"Round finished. Words removed: {removed_words}, Words added: {added_words}, Score: {round_score}"
+        )
 
         return GameState(
             current_words=self.manager.get_current_words(),
             removed_words=removed_words,
             added_words=added_words,
             similarities=dict(zip(current_words, similarities)),
+            round_score=round_score,
+            total_score=self.manager.total_score,
             game_over=self.manager.is_game_over(),
         )
-
-
-def load_words(filepath: str | Path) -> Dict[int, str]:
-    """Load words from a CSV file."""
-    logger.info(f"Loading words from {filepath}")
-    with open(filepath, "r", encoding="utf-8") as f:
-        lines = f.read().splitlines()
-    words = {i: line.split(",")[1] for i, line in enumerate(lines[1:])}
-    logger.info(f"Loaded {len(words)} words.")
-    return words
 
 
 async def main():
     """Run an example game."""
     logger.info("Starting word game example.")
     # Load words
-    words = load_words("dicts/german/top1000.csv")
+    config = load_config()
+    words = load_words(config["data"]["default_dict"])
 
     # Initialize game components
     async with EmbeddingClient() as client:
@@ -235,6 +243,8 @@ async def main():
                 print(f"{word}: {sim:.3f}")
             print("\nRemoved words:", result.removed_words)
             print("Added words:", result.added_words)
+            print(f"Round Score: {result.round_score}")
+            print(f"Total Score: {result.total_score}")
             print("\nCurrent words:", result.current_words)
 
             if result.game_over:

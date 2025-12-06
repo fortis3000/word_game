@@ -15,17 +15,7 @@ services:
       - ../.env
     volumes:
       - ../models/embeddinggemma300:/app/model
-    command:
-      [
-        "uv",
-        "run",
-        "uvicorn",
-        "src.embedding_service.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-      ]
+    command: [ "uv", "run", "uvicorn", "src.embedding_service.main:app", "--host", "0.0.0.0", "--port", "8000" ]
 
   telegram-bot:
     build:
@@ -42,4 +32,4 @@ services:
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000
     volumes:
       - ../data:/app/data
-    command: ["uv", "run", "python", "-m", "src.telegram_bot"]
+    command: [ "uv", "run", "python", "-m", "src.telegram_bot" ]

@@ -25,8 +25,7 @@ class EmbeddingService:
     """Service class for managing the embedding model."""
 
     def __init__(self):
-        self.model: SentenceTransformer
-        self.model = None
+        self.model: SentenceTransformer | None = None
         logger.info("EmbeddingService initialized.")
 
     async def load_model(self):
@@ -43,7 +42,7 @@ class EmbeddingService:
                 backend="torch",
                 local_files_only=True,
                 model_kwargs={
-                    "torch_dtype": "float32",
+                    "dtype": "float32",
                     # "device_map": "cpu",
                 },
             )

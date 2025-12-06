@@ -9,9 +9,7 @@ class EmbeddingRequest(BaseModel):
     input: str | list[str] = Field(
         description="The text to embed. Can be a string or array of strings."
     )
-    model: str | None = Field(
-        default="embeddinggemma-300m", description="Model to use for embeddings"
-    )
+    model: str = Field(default="embeddinggemma-300m", description="Model to use for embeddings")
     encoding_format: str | None = Field(
         default="float", description="The format to return the embeddings in"
     )

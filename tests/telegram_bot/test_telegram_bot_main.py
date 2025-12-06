@@ -11,6 +11,7 @@ from src.telegram_bot.__main__ import (
     start,
     stop,
 )
+from telegram.constants import ParseMode
 
 # Constants for testing
 TEST_USER_ID = 123
@@ -32,8 +33,9 @@ async def test_help_command():
         await help_command(update, context)
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        assert "Word Similarity Game Commands:" in call_args[0][0]
+        assert "📚 *Word Similarity Game Commands*" in call_args[0][0]
         assert call_args[1]["reply_markup"] == START_KEYBOARD
+        assert call_args[1]["parse_mode"] == ParseMode.MARKDOWN_V2
 
     update.message.reply_text.reset_mock()
 
@@ -45,17 +47,22 @@ async def test_help_command():
         await help_command(update, context)
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        assert "Word Similarity Game Commands:" in call_args[0][0]
+        assert "📚 *Word Similarity Game Commands*" in call_args[0][0]
         assert call_args[1]["reply_markup"] == STOP_KEYBOARD
+        assert call_args[1]["parse_mode"] == ParseMode.MARKDOWN_V2
 
 
 @pytest.mark.asyncio
 async def test_handle_word_valid():
-    """Test the handle_word function for a valid word."""
+    """Test the handle_word function for a valid word with animation."""
     update = MagicMock()
     update.effective_user.id = TEST_USER_ID
     update.message.text = "testword"
-    update.message.reply_text = AsyncMock()
+
+    # Mock the message returned by reply_text so we can check edit_text calls
+    mock_sent_message = MagicMock()
+    mock_sent_message.edit_text = AsyncMock()
+    update.message.reply_text = AsyncMock(return_value=mock_sent_message)
 
     context = MagicMock()
     mock_game = MagicMock()
@@ -76,11 +83,14 @@ async def test_handle_word_valid():
 
         mock_game.play_round.assert_called_once_with("testword")
         update.message.reply_text.assert_called_once()
+
+        # Verify response
         call_args = update.message.reply_text.call_args[0][0]
-        assert "Your word: testword" in call_args
-        assert "Removed words: word2" in call_args
-        assert "Added words: word3" in call_args
-        assert "Current words: word1, word3" in call_args
+        kwargs = update.message.reply_text.call_args[1]
+        assert "📝 Your word: *testword*" in call_args
+        assert "✨ Removed words: ~word2~" in call_args
+        assert "🎉 *Nice shot\\!*" in call_args
+        assert kwargs["parse_mode"] == ParseMode.MARKDOWN_V2
 
 
 @pytest.mark.asyncio
@@ -88,6 +98,7 @@ async def test_handle_word_no_active_game():
     """Test the handle_word function when there is no active game."""
     update = MagicMock()
     update.effective_user.id = TEST_USER_ID
+    update.message.text = "valid-word"
     update.message.reply_text = AsyncMock()
 
     context = MagicMock()
@@ -96,8 +107,9 @@ async def test_handle_word_no_active_game():
         await handle_word(update, context)
 
         update.message.reply_text.assert_called_once_with(
-            "You don't have an active game. Use /start to begin!",
+            "❓ You don't have an active game\\. Use /start to begin\\! 🚀",
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -131,7 +143,9 @@ async def test_handle_word_game_over():
         mock_game.play_round.assert_called_once_with("testword")
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args[0][0]
-        assert "Game Over!" in call_args
+        kwargs = update.message.reply_text.call_args[1]
+        assert "🎉 *Game Over\\!*" in call_args
+        assert kwargs["parse_mode"] == ParseMode.MARKDOWN_V2
         assert TEST_USER_ID not in active_games
 
 
@@ -147,16 +161,25 @@ async def test_stop_active_game():
     mock_client.__aexit__ = AsyncMock()
 
     # Simulate an active game for the user
+    mock_word_manager = MagicMock()
+    mock_word_manager.total_score = 100
+    mock_word_manager.seen_words = {"word1", "word2"}
+
     with patch(
         "src.telegram_bot.__main__.active_games",
-        {TEST_USER_ID: (MagicMock(), MagicMock(), mock_client)},
+        {TEST_USER_ID: (MagicMock(), mock_word_manager, mock_client)},
     ):
         await stop(update, context)
 
         # Assert that the game is stopped and the appropriate message is sent
-        update.message.reply_text.assert_called_once_with(
-            "Game stopped. Use /start to begin a new game!", reply_markup=START_KEYBOARD
-        )
+        update.message.reply_text.assert_called_once()
+        call_args = update.message.reply_text.call_args[0][0]
+        kwargs = update.message.reply_text.call_args[1]
+        # assert "🛑 Game stopped." in call_args  # Removed in favor of Game Summary
+        assert "🏁 *Game Summary*" in call_args
+        assert "🏆 Final Score: 100" in call_args
+        assert "📚 Words Encountered: 2" in call_args
+        assert kwargs["parse_mode"] == ParseMode.MARKDOWN_V2
         assert TEST_USER_ID not in active_games
 
 
@@ -174,8 +197,9 @@ async def test_stop_no_active_game():
 
         # Assert that the appropriate message is sent
         update.message.reply_text.assert_called_once_with(
-            "You don't have an active game. Use /start to begin!",
+            "🤔 You don't have an active game\\. Use /start to begin\\! 🌟",
             reply_markup=START_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
 
@@ -211,6 +235,9 @@ async def test_start_new_game():
 
         # Assert that the reply_text method was called with the welcome message
         update.message.reply_text.assert_called_once()
+        call_args = update.message.reply_text.call_args
+        assert "parse_mode" in call_args[1]
+        assert call_args[1]["parse_mode"] == ParseMode.MARKDOWN_V2
 
 
 @pytest.mark.asyncio
@@ -231,6 +258,106 @@ async def test_start_game_already_active():
 
         # Assert that the appropriate message is sent
         update.message.reply_text.assert_called_once_with(
-            "You already have an active game! Use /stop to end it first.",
+            "⚠️ You already have an active game\\! Use /stop to end it first\\.",
             reply_markup=STOP_KEYBOARD,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
+
+
+@pytest.mark.asyncio
+async def test_handle_word_too_long():
+    """Test handle_word with a word that is too long."""
+    update = MagicMock()
+    update.effective_user.id = TEST_USER_ID
+    # Create a word longer than 50 characters
+    long_word = "a" * 51
+    update.message.text = long_word
+    update.message.reply_text = AsyncMock()
+
+    context = MagicMock()
+
+    await handle_word(update, context)
+
+    update.message.reply_text.assert_called_once_with(
+        "🚫 Your message is too long\\. Please keep it under 50 characters\\. 📏",
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
+
+
+@pytest.mark.asyncio
+async def test_handle_word_invalid_chars():
+    """Test handle_word with invalid characters."""
+    update = MagicMock()
+    update.effective_user.id = TEST_USER_ID
+    # Invalid characters: numbers, special symbols
+    update.message.text = "hello123"
+    update.message.reply_text = AsyncMock()
+
+    context = MagicMock()
+
+    await handle_word(update, context)
+
+    update.message.reply_text.assert_called_once_with(
+        "🚫 Invalid characters\\. Please use only letters, numbers, spaces, hyphens/apostrophes\\. 🔤",
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
+
+
+@pytest.mark.asyncio
+async def test_handle_word_german_chars():
+    """Test handle_word with German characters."""
+    update = MagicMock()
+    update.effective_user.id = TEST_USER_ID
+    update.message.text = "Müller-Straßenbahn"
+    update.message.reply_text = AsyncMock()
+
+    context = MagicMock()
+    mock_game = MagicMock()
+    mock_game.play_round = AsyncMock()
+    mock_game.play_round.return_value = MagicMock(
+        similarities={"word1": TEST_SIMILARITY_SCORE},
+        removed_words=[],
+        added_words=[],
+        current_words=["word1"],
+        game_over=False,
+    )
+
+    with patch(
+        "src.telegram_bot.__main__.active_games",
+        {TEST_USER_ID: (mock_game, MagicMock(), MagicMock())},
+    ):
+        await handle_word(update, context)
+
+        # Should proceed to play_round
+        mock_game.play_round.assert_called_once_with("Müller-Straßenbahn")
+        update.message.reply_text.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_handle_word_valid_chars_punctuation():
+    """Test handle_word with valid punctuation (hyphen, apostrophe)."""
+    update = MagicMock()
+    update.effective_user.id = TEST_USER_ID
+    update.message.text = "it's a-test"
+    update.message.reply_text = AsyncMock()
+
+    context = MagicMock()
+    mock_game = MagicMock()
+    mock_game.play_round = AsyncMock()
+    mock_game.play_round.return_value = MagicMock(
+        similarities={"word1": TEST_SIMILARITY_SCORE},
+        removed_words=[],
+        added_words=[],
+        current_words=["word1"],
+        game_over=False,
+    )
+
+    with patch(
+        "src.telegram_bot.__main__.active_games",
+        {TEST_USER_ID: (mock_game, MagicMock(), MagicMock())},
+    ):
+        await handle_word(update, context)
+
+        # Should proceed to play_round
+        mock_game.play_round.assert_called_once_with("it's a-test")
+        update.message.reply_text.assert_called_once()

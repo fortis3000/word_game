@@ -53,29 +53,37 @@ This project is a word similarity game with a Telegram bot interface. It leverag
 - **Python version:** 3.12+
 - **Dependency management:** Uses `pyproject.toml` and [uv](https://github.com/astral-sh/uv) for fast installs and lockfile management.
 
-**Create and activate a virtual environment:**
+**Install dependencies:**
 ```bash
-uv venv -p 3.12
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Sync dependencies (creates .venv automatically)
+uv sync
+```
+
+**Activate virtual environment (optional if using `uv run`):**
+```bash
 # On Linux/macOS:
 source .venv/bin/activate
 # On Windows:
 .venv\Scripts\activate
 ```
 
-**Sync dependencies:**
-```bash
-uv pip sync environment/dev-reqirements.txt
-```
-
 ### 2. Linting & Formatting
 
 - Uses [ruff](https://docs.astral.sh/ruff/) for both linting and formatting.
+- A `Makefile` is provided for convenience.
 
-**Run checks:**
+**Run checks (via Makefile):**
 ```bash
-ruff format .
-ruff check .
-ruff check . --fix
+make precommit
+```
+
+**Run checks (manually):**
+```bash
+uv run ruff format .
+uv run ruff check . --fix
 ```
 
 ### 3. Testing
@@ -84,7 +92,9 @@ ruff check . --fix
 
 **Run tests:**
 ```bash
-pytest
+make test
+# OR
+uv run python -m pytest
 ```
 
 ### 4. Docker
@@ -127,17 +137,18 @@ export LOG_FORMAT=json
 
 ## Best Practices
 
+- **Dependency Management:** Use `uv` for all dependency operations (`uv add`, `uv remove`, `uv sync`).
+- **Code Quality:** Run `make precommit` before pushing changes to ensure code is formatted and linted with `ruff`.
 - **File Paths:** Use absolute paths when interacting with files.
-- **Code Style:** All Python code should be formatted with `ruff` according to the configuration in `pyproject.toml`.
 - **Logging:** Use the logger utility from `src/utils/logger.py` for any new logging.
-- **Testing:** Any new features should be accompanied by corresponding tests in the `tests` directory.
+- **Testing:** Any new features should be accompanied by corresponding tests in the `tests` directory. Run `make test` to verify.
 
 ---
 
 ## Getting Started
 
 1. **Clone the repository** (or create a new repo from this template).
-2. **Install, compile, and activate the virtual environment** (see above).
+2. **Install dependencies:** Run `uv sync`.
 3. **Adjust `pyproject.toml` and CI configuration** as needed.
 4. **Add your source code to the `src` folder.**
 5. **Enjoy coding!**

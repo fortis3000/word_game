@@ -17,6 +17,25 @@ services:
       - ../models/embeddinggemma300:/app/model
     command: [ "uv", "run", "uvicorn", "src.embedding_service.main:app", "--host", "0.0.0.0", "--port", "8000" ]
 
+  game-app:
+    build:
+      context: ..
+      dockerfile: docker/game.Dockerfile
+    networks:
+      - word-game-net
+    ports:
+      - "8001:8001"
+    depends_on:
+      embedding-service:
+        condition: service_started
+    env_file:
+      - ../.env
+    environment:
+      - EMBEDDING_SERVICE_URL=http://embedding-service:8000
+    volumes:
+      - ../data:/app/data
+    command: [ "uv", "run", "uvicorn", "src.game.api:app", "--host", "0.0.0.0", "--port", "8001" ]
+
   telegram-bot:
     build:
       context: ..

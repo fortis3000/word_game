@@ -84,7 +84,16 @@ class WordManager:
 
         # Remove most similar words
         removed_ids = set()
+        # Re-apply similarity check in main.py
         for word_id, score in word_scores:
+            if score > 0.98:
+                logger.info(
+                    f"Guess too similar (score: {score}) to '{self.all_words[word_id]}'. Rejected."
+                )
+                raise ValueError(
+                    f"Word is already on screen or too similar to '{self.all_words[word_id]}'."
+                )
+
             if len(removed_ids) >= max_remove:
                 logger.debug(
                     f"Max removal limit ({max_remove}) reached. Stopping further removals."

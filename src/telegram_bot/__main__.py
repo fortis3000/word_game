@@ -24,7 +24,7 @@ from src.telegram_bot.message_manager import MessageManager
 # Define keyboards
 GAME_URL = os.getenv("GAME_URL", "http://localhost:8001")  # Default to example, user must configure
 START_KEYBOARD = ReplyKeyboardMarkup(
-    [[KeyboardButton("Play Word Game", web_app=WebAppInfo(url=GAME_URL))], ["/start"]],
+    [[KeyboardButton("Play Word Game", web_app=WebAppInfo(url=GAME_URL))]],
     resize_keyboard=True,
 )
 STOP_KEYBOARD = ReplyKeyboardMarkup([["/stop"]], resize_keyboard=True)

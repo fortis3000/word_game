@@ -103,5 +103,9 @@ def test_stop_game(mock_gm_cls, client):
     response = client.post("/api/game/sess_123/stop")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "stopped", "session_id": "sess_123"}
+    assert response.json() == {
+        "session_id": "sess_123",
+        "total_score": 10,
+        "words_found": 1,
+    }
     assert "sess_123" not in mock_gm.games

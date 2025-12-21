@@ -4,7 +4,7 @@ import os
 import re
 from typing import Dict
 
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import ReplyKeyboardMarkup, Update, WebAppInfo, KeyboardButton
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -22,7 +22,11 @@ from src.utils.logger import get_logger
 from src.telegram_bot.message_manager import MessageManager
 
 # Define keyboards
-START_KEYBOARD = ReplyKeyboardMarkup([["/start"]], resize_keyboard=True, one_time_keyboard=True)
+GAME_URL = os.getenv("GAME_URL", "http://localhost:8001")  # Default to example, user must configure
+START_KEYBOARD = ReplyKeyboardMarkup(
+    [[KeyboardButton("Play Word Game", web_app=WebAppInfo(url=GAME_URL))], ["/start"]],
+    resize_keyboard=True,
+)
 STOP_KEYBOARD = ReplyKeyboardMarkup([["/stop"]], resize_keyboard=True)
 
 logger = get_logger(__name__)

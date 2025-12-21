@@ -90,7 +90,14 @@ def test_play_round_success(mock_game_cls, mock_gm_cls, client):
 def test_stop_game(mock_gm_cls, client):
     # Setup mock manager and inject into app state
     mock_gm = MagicMock(spec=GameManager)
-    mock_gm.games = {"sess_123": "dummy_game"}
+
+    # Create a mock game with necessary attributes
+    mock_game = MagicMock()
+    mock_game.manager.seen_words = ["apple", "banana"]
+    mock_game.manager.current_words = ["banana"]
+    mock_game.manager.total_score = 10
+
+    mock_gm.games = {"sess_123": mock_game}
     app.state.game_manager = mock_gm
 
     response = client.post("/api/game/sess_123/stop")

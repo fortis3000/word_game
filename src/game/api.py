@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import Dict
 from contextlib import asynccontextmanager
@@ -57,7 +58,8 @@ async def lifespan(app: FastAPI):
     # Initialize shared resources
     logger.info("Initializing Game API...")
     game_manager = GameManager()
-    embedding_client = EmbeddingClient()
+    embedding_service_url = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8000")
+    embedding_client = EmbeddingClient(api_url=embedding_service_url)
     await embedding_client.__aenter__()
 
     app.state.game_manager = game_manager

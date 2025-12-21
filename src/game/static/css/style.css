@@ -12,7 +12,7 @@
 }
 
 * {
-    box_sizing: border-box;
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
@@ -221,6 +221,28 @@ input[type="text"]:focus {
     margin-top: 2rem;
     display: flex;
     gap: 1rem;
+}
+
+.menu-actions.column {
+    flex-direction: column;
+    width: 100%;
+}
+
+.lang-btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.small-btn {
+    padding: 0.5rem 1rem;
+    font-size: 1.2rem;
+    line-height: 1;
 }
 
 .game-header {

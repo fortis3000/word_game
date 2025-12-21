@@ -32,23 +32,35 @@ class GameManager:
         self.games: Dict[str, WordGame] = {}
         self.clients: Dict[str, EmbeddingClient] = {}
         self.config = load_config()
-        self.all_words = load_words(self.config["data"]["default_dict"])
+        self.words: Dict[str, Dict[int, str]] = {}
 
-    async def create_game(self) -> tuple[str, WordManager]:
+        # Load all configured languages or default
+        languages = self.config.get("data", {}).get("languages", {})
+        if not languages:
+            # Fallback to default if no languages defined
+            default_path = self.config["data"]["default_dict"]
+            self.words["en"] = load_words(default_path)  # Assume default is EN if not specified
+        else:
+            for lang, path in languages.items():
+                try:
+                    self.words[lang] = load_words(path)
+                except Exception as e:
+                    logger.error(f"Failed to load dictionary for {lang}: {e}")
+
+        # Ensure we have at least one dictionary
+        if not self.words:
+            raise RuntimeError("No dictionaries loaded")
+
+    async def create_game(self, lang: str = "en") -> tuple[str, WordManager]:
         session_id = str(uuid.uuid4())
 
-        # We need a new client for each game? Or share one?
-        # The current implementation of EmbeddingClient uses async context manager.
-        # Ideally we should have a singleton client or manage it better,
-        # but to respect existing design, let's try to reuse or instantiate per game.
-        # Actually, WordGame takes a client. Let's create one client for the app lifespan if possible,
-        # but WordGame design might expect ownership.
-        # Let's create a single shared client for the application to avoid overhead.
+        word_dict = self.words.get(lang)
+        if not word_dict:
+            logger.warning(f"Language {lang} not found, falling back to first available.")
+            lang = list(self.words.keys())[0]
+            word_dict = self.words[lang]
 
-        word_manager = WordManager(self.all_words, target_words_count=5)
-        # We will inject the shared client from app.state
-        # But wait, WordGame __init__ takes client.
-
+        word_manager = WordManager(word_dict, target_words_count=5)
         return session_id, word_manager
 
 
@@ -84,28 +96,23 @@ app.add_middleware(
 )
 
 # Serve Static Files
-# We need to ensure the directory exists first, but we'll assume the next steps create it.
-# For now, we will mount it, but we might need to create the dir first to avoid errors.
-# We'll handle this in the workflow order.
+# We will mount static files at the end
+
 
 # API Endpoints
 
 
 @app.post("/api/game/start", response_model=StartGameResponse)
-async def start_game():
+async def start_game(lang: str = "en"):
     manager: GameManager = app.state.game_manager
     client: EmbeddingClient = app.state.embedding_client
 
-    session_id, word_manager = await manager.create_game()
+    session_id, word_manager = await manager.create_game(lang=lang)
 
     game = WordGame(word_manager, client)
     word_manager.init_game()
 
     manager.games[session_id] = game
-
-    # Get initial state
-    # We need to construct the initial state manually or add a method to WordGame/WordManager
-    # similar to play_round return but without a move.
 
     return StartGameResponse(
         session_id=session_id,

@@ -2,3 +2,7 @@ data:
   raw_path: "data/raw"
   processed_path: "data/processed"
   default_dict: "data/dicts/DE/nouns/top2000.csv"
+  languages:
+    en: "data/dicts/EN/all_words/top2000.csv"
+    de: "data/dicts/DE/nouns/top2000.csv"
+    ru: "data/dicts/RU/all_words/top2000.csv"

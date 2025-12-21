@@ -1,5 +1,6 @@
 const API_BASE = '/api/game';
 let sessionId = null;
+let selectedLang = null;
 
 const startScreen = document.getElementById('start-screen');
 const gameArea = document.getElementById('game-area');
@@ -14,6 +15,10 @@ const quitBtn = document.getElementById('quit-btn');
 const restartBtn = document.getElementById('restart-btn');
 const backToMenuBtn = document.getElementById('back-to-menu-btn');
 const submitBtn = document.getElementById('submit-btn');
+const hintBtn = document.getElementById('hint-btn');
+
+// Language Buttons
+const langBtns = document.querySelectorAll('.lang-btn');
 
 // UI Elements
 const currentWordsList = document.getElementById('current-words-list');
@@ -21,23 +26,106 @@ const roundScoreEl = document.getElementById('round-score');
 const totalScoreEl = document.getElementById('total-score');
 const finalScoreEl = document.getElementById('final-score');
 const toastContainer = document.getElementById('toast-container');
+const instructionText = document.getElementById('instruction-text');
 
-startBtn.addEventListener('click', startGame);
-restartBtn.addEventListener('click', startGame);
-backToMenuBtn.addEventListener('click', showMainMenu);
-summaryBackBtn.addEventListener('click', showMainMenu);
-quitBtn.addEventListener('click', quitGame);
-submitBtn.addEventListener('click', submitWord);
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("App initialized");
+    const langBtns = document.querySelectorAll('.lang-btn');
+    console.log("Found lang buttons:", langBtns.length);
 
-wordInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        submitWord();
-    }
+    langBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            console.log("Clicked language:", btn.dataset.lang);
+            selectLanguage(btn.dataset.lang, btn);
+        });
+    });
+
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
+    backToMenuBtn.addEventListener('click', showMainMenu);
+    summaryBackBtn.addEventListener('click', showMainMenu);
+    quitBtn.addEventListener('click', quitGame);
+    submitBtn.addEventListener('click', submitWord);
+    hintBtn.addEventListener('click', showHint);
+
+    wordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            submitWord();
+        }
+    });
+
+    // Initial Load
+    showMainMenu();
 });
 
+function selectLanguage(lang, btn) {
+    if (!lang) return;
+    selectedLang = lang;
+
+    // Highlight button
+    langBtns.forEach(b => {
+        b.style.border = 'none';
+        b.style.opacity = '0.7';
+    });
+    btn.style.border = '2px solid var(--accent)';
+    btn.style.opacity = '1';
+
+    // Show start button and instruction
+    startBtn.classList.remove('hidden');
+    instructionText.classList.remove('hidden');
+
+    // Update instructions based on language
+    const texts = {
+        'en': "Explore semantic relationships. Find words closely related to the hidden context.",
+        'de': "Erforsche semantische Zusammenhänge. Finde Wörter, die dem versteckten Kontext nahe stehen.",
+        'ru': "Исследуйте смысловые связи. Найдите слова, близкие к скрытому контексту."
+    };
+    instructionText.textContent = texts[selectedLang] || texts['en'];
+
+    // Update button text
+    const btnTexts = {
+        'en': "Start Game",
+        'de': "Spiel Starten",
+        'ru': "Начать игру"
+    };
+    startBtn.textContent = btnTexts[selectedLang] || btnTexts['en'];
+}
+
+function showMainMenu() {
+    startScreen.classList.remove('hidden');
+    gameArea.classList.add('hidden');
+    gameOverScreen.classList.add('hidden');
+    summaryScreen.classList.add('hidden');
+
+    // Reset selection state mostly for UI cleanliness, but keeping selectedLang if they just paused is fine.
+    // If we want to force re-selection:
+    selectedLang = null;
+    startBtn.classList.add('hidden');
+    instructionText.classList.add('hidden');
+    langBtns.forEach(b => {
+        b.style.border = 'none';
+        b.style.opacity = '1';
+    });
+}
+
+function showHint() {
+    const hints = {
+        'en': "Type words that are semantically similar to the displayed words!",
+        'de': "Tippe Wörter ein, die den angezeigten Wörtern inhaltlich ähnlich sind!",
+        'ru': "Вводите слова, которые по смыслу похожи на отображаемые!"
+    };
+    showToast(hints[selectedLang] || hints['en'], 'info');
+}
+
 async function startGame() {
+    if (!selectedLang) {
+        showToast('Please select a language first!', 'warning');
+        return;
+    }
+
     try {
-        const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
+        const response = await fetch(`${API_BASE}/start?lang=${selectedLang}`, { method: 'POST' });
         if (!response.ok) throw new Error('Failed to start game');
 
         const data = await response.json();
@@ -50,7 +138,13 @@ async function startGame() {
 
         showGameArea();
         wordInput.focus();
-        showToast('Game Started! Good Luck!', 'info');
+
+        const startMsgs = {
+            'en': 'Game Started! Good Luck!',
+            'de': 'Spiel gestartet! Viel Erfolg!',
+            'ru': 'Игра началась! Удачи!'
+        };
+        showToast(startMsgs[selectedLang] || startMsgs['en'], 'info');
     } catch (error) {
         console.error('Error starting game:', error);
         showToast('Could not start game. Please try again.', 'warning');
@@ -89,13 +183,6 @@ function showSummaryScreen(stats) {
     summaryWordsFoundEl.textContent = stats.words_found;
 }
 
-function showMainMenu() {
-    gameArea.classList.add('hidden');
-    gameOverScreen.classList.add('hidden');
-    summaryScreen.classList.add('hidden');
-    startScreen.classList.remove('hidden');
-}
-
 function showGameArea() {
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
@@ -123,7 +210,6 @@ async function submitWord() {
 
         if (response.status === 400) {
             const errData = await response.json();
-            // Assuming the backend sends { detail: "..." }
             if (errData.detail && (errData.detail.includes("too similar") || errData.detail.includes("already on screen"))) {
                 showToast('Word is already on screen!', 'warning');
             } else {
@@ -178,19 +264,16 @@ function showToast(message, type = 'info') {
 }
 
 function updateUI(state) {
-    // Start State reset
     if (state.round_score === 0 && state.total_score === 0 && state.removed_words.length === 0) {
-        currentWordsList.innerHTML = ''; // Clear for fresh start
+        currentWordsList.innerHTML = '';
     }
 
-    // Current Words
     currentWordsList.innerHTML = '';
     state.current_words.forEach(word => {
         const li = document.createElement('li');
         li.textContent = word;
         li.className = 'word-item';
 
-        // Highlight if it's a newly added word
         if (state.added_words && state.added_words.includes(word)) {
             li.classList.add('new-word');
         }
@@ -198,7 +281,6 @@ function updateUI(state) {
         currentWordsList.appendChild(li);
     });
 
-    // Update Score
     roundScoreEl.textContent = state.round_score;
     totalScoreEl.textContent = state.total_score;
 }

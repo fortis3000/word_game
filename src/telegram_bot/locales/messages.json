@@ -14,9 +14,11 @@
         "feedback_bad": "🤔 *Close?* No matches this time\\. Try a different angle\\!",
         "game_over": "\n\n🎉 *Game Over\\!* All words have been cleared\\! 🏆",
         "error_processing": "😵‍💫 Error processing your word\\. Please try again\\. 🔄",
-        "help_message": "📚 *Word Similarity Game Commands*\n\n🟢 /start \\- Start a new game\n🛑 /stop \\- Stop the current game\nℹ️ /help \\- Show this message\n\n🎮 *Tip:* Think of synonyms or related concepts in German\\!",
+        "help_message": "📚 *Word Similarity Game Commands*\n\n🟢 /start \\- Start a new game\n🛑 /stop \\- Stop the current game\nℹ️ /help \\- Show this message\n\n🎮 *Tip:* Think of synonyms or related concepts\\!",
         "none": "None",
-        "enter_word_prompt": "👇 Your next word?"
+        "enter_word_prompt": "👇 Your next word?",
+        "button_hint": "💡 Hint",
+        "language_select": "Please choose your language / Bitte wählen Sie Ihre Sprache / Выберите язык:"
     },
     "de": {
         "already_active_game": "⚠️ Du hast bereits ein aktives Spiel\\! Benutze /stop um es zu beenden\\.",
@@ -33,9 +35,11 @@
         "feedback_bad": "🤔 *Knapp?* Kein Treffer diesmal\\. Versuch's anders\\!",
         "game_over": "\n\n🎉 *Spiel vorbei\\!* Alle Wörter wurden abgeräumt\\! 🏆",
         "error_processing": "😵‍💫 Fehler bei der Verarbeitung\\. Bitte nochmal versuchen\\. 🔄",
-        "help_message": "📚 *Befehle*\n\n🟢 /start \\- Neues Spiel\n🛑 /stop \\- Spiel beenden\nℹ️ /help \\- Hilfe anzeigen\n\n🎮 *Tipp:* Denke an Synonyme oder verwandte Begriffe auf Deutsch\\!",
+        "help_message": "📚 *Befehle*\n\n🟢 /start \\- Neues Spiel\n🛑 /stop \\- Spiel beenden\nℹ️ /help \\- Hilfe anzeigen\n\n🎮 *Tipp:* Denke an Synonyme oder verwandte Begriffe\\!",
         "none": "Keine",
-        "enter_word_prompt": "👇 Dein nächstes Wort?"
+        "enter_word_prompt": "👇 Dein nächstes Wort?",
+        "button_hint": "💡 Hinweis",
+        "language_select": "Please choose your language / Bitte wählen Sie Ihre Sprache / Выберите язык:"
     },
     "ru": {
         "already_active_game": "⚠️ У вас уже активная игра\\! Используйте /stop для завершения\\.",
@@ -52,8 +56,10 @@
         "feedback_bad": "🤔 *Мимо?* Попробуйте другое слово\\!",
         "game_over": "\n\n🎉 *Игра окончена\\!* Все слова пройдены\\! 🏆",
         "error_processing": "😵‍💫 Ошибка обработки\\. Попробуйте снова\\. 🔄",
-        "help_message": "📚 *Команды*\n\n🟢 /start \\- Начать игру\n🛑 /stop \\- Остановить игру\nℹ️ /help \\- Помощь\n\n🎮 *Совет:* Используйте немецкие синонимы\\!",
+        "help_message": "📚 *Команды*\n\n🟢 /start \\- Начать игру\n🛑 /stop \\- Остановить игру\nℹ️ /help \\- Помощь\n\n🎮 *Совет:* Используйте синонимы\\!",
         "none": "Нет",
-        "enter_word_prompt": "👇 Ваше слово?"
+        "enter_word_prompt": "👇 Ваше слово?",
+        "button_hint": "💡 Подсказка",
+        "language_select": "Please choose your language / Bitte wählen Sie Ihre Sprache / Выберите язык:"
     }
 }

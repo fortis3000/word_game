@@ -35,7 +35,7 @@ def extract_data(input_path, output_path):
     # Write to output CSV
     with open(output_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["Number", "German Word"])  # Header
+        writer.writerow(["id", "word"])  # Header
         writer.writerows(extracted_data)
 
     print(f"Extracted {len(extracted_data)} rows to {output_path}")

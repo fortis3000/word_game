@@ -5,26 +5,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Similarity Game</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div class="container">
+        <!-- Content same as above -->
         <main id="start-screen" class="screen-center">
             <header>
                 <h1>Word Context Game</h1>
-                <p>Explore semantic relationships. Find words closely related to the hidden context.</p>
             </header>
+
+            <div class="menu-actions column" style="margin-bottom: 2rem;">
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Select Language:</p>
+                <button class="primary-btn lang-btn" data-lang="en">English 🇬🇧</button>
+                <button class="primary-btn lang-btn" data-lang="de">Deutsch 🇩🇪</button>
+                <button class="primary-btn lang-btn" data-lang="ru">Русский 🇷🇺</button>
+            </div>
+
+            <p id="instruction-text" class="hidden">Explore semantic relationships. Find words closely related to the
+                hidden context.</p>
+
             <div class="menu-actions">
-                <button id="start-btn" class="primary-btn large-btn">Start New Game</button>
+                <button id="start-btn" class="primary-btn large-btn hidden">Start Game</button>
             </div>
         </main>
 
         <main id="game-area" class="hidden">
             <header class="game-header">
                 <h2>Word Context Game</h2>
-                <button id="quit-btn" class="text-btn">Quit Game</button>
+                <div class="header-actions">
+                    <button id="hint-btn" class="secondary-btn small-btn" title="Hint">💡</button>
+                    <button id="quit-btn" class="text-btn">Quit</button>
+                </div>
             </header>
 
             <div class="score-board">
@@ -88,7 +102,7 @@
 
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js"></script>
+    <script src="/js/app.js?v=2"></script>
 </body>
 
 </html>

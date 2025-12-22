@@ -51,3 +51,9 @@ case-sensitive = true
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 include = ["/src"]
+
+[tool.coverage.run]
+omit = ["/tmp/*"]
+
+[tool.coverage.report]
+ignore_errors = true

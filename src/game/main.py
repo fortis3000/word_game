@@ -170,34 +170,7 @@ class WordManager:
 
     def is_game_over(self) -> bool:
         """Check if all words have been seen."""
-        # Game is over if deck is empty AND we have cleared current words (or purely if deck is empty? User logic seems to imply clearing everything)
-        # Original logic: len(get_available_words()) == 0.
-        # With deck: available words are just those in the deck.
-        # game_over = len(self.deck) == 0 and len(self.current_words) == 0
-        # Start logic used available=0 -> game over.
-        # But if deck is empty but we still have words on screen, we play until screen is clear?
-        # Let's match original intent: "No available words to add" -> Eventually clear screen.
-        # Actually the original code strictly checked available words (hidden words).
-        # Let's say game over if deck is empty.
-        # Wait, if deck is empty, you can still match words on screen!
-        # Original: `game_over = len(self.get_available_words()) == 0`
-        # `get_available_words` was all_words - seen_words.
-        # If I have 5 words on screen, seen=5. total=100. available=95.
-        # If I match all 100, then seen=100. available=0.
-        # So yes, game over is when deck is empty AND current_words is empty?
-        # Or just when we can't add more?
-        # Usually Solitaire ends when you can't make moves, but here we can make moves if words are on screen.
-        # So game over should be when deck is empty AND current words are gone (or unmatchable, but we don't check unmatchable yet).
-        # Let's stick to: Deck empty means no new words.
-
-        # Re-reading original: `game_over = len(self.get_available_words()) == 0`.
-        # `available` means "in the bag".
-        # If bag is empty, `is_game_over` returns True immediately?
-        # That would mean you can't finish the last 5 words. That seems like a bug in original or I misunderstood.
-        # In main loop: `while not word_manager.is_game_over():`.
-        # If bag is empty, loop breaks. You never play the last 5 words.
-        # I should probably fix this to be "Deck empty AND current words empty".
-
+        # Game is over if deck is empty AND we have cleared current deck
         return len(self.deck) == 0 and len(self.current_words) == 0
 
 
@@ -277,7 +250,7 @@ async def main():
         word_manager.init_game()
         initial_words = word_manager.get_current_words()
         logger.info(f"Game started with initial words: {initial_words}")
-        print("Starting words:", initial_words)
+        logger.debug(f"Starting words: {initial_words}")
 
         # Game loop
         while not word_manager.is_game_over():
@@ -289,19 +262,18 @@ async def main():
 
             result = await game.play_round(user_input)
 
-            print("\nYour word:", user_input)
-            print("\nSimilarities:")
+            logger.debug(f"\nYour word: {user_input}")
+            logger.debug("\nSimilarities:")
             for word, sim in result.similarities.items():
-                print(f"{word}: {sim:.3f}")
-            print("\nRemoved words:", result.removed_words)
-            print("Added words:", result.added_words)
-            print(f"Round Score: {result.round_score}")
-            print(f"Total Score: {result.total_score}")
-            print("\nCurrent words:", result.current_words)
+                logger.debug(f"{word}: {sim:.3f}")
+            logger.debug(f"\nRemoved words: {result.removed_words}")
+            logger.debug(f"Added words: {result.added_words}")
+            logger.debug(f"Round Score: {result.round_score}")
+            logger.debug(f"Total Score: {result.total_score}")
+            logger.debug(f"\nCurrent words: {result.current_words}")
 
             if result.game_over:
                 logger.info("Game Over! All available words have been seen!")
-                print("\nGame Over! All words have been seen!")
                 break
 
 

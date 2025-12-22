@@ -132,10 +132,6 @@ def test_word_manager_process_guess(sample_words):
         TEST_WORD_ID_3,
         TEST_WORD_ID_4,
     }  # apple, banana, orange, grape, strawberry
-    # Fix deck: remove these from deck if they match what init_game did?
-    # init_game(seed=42) with sample_words(sorted keys 0..9)
-    # shuffled might produce different order.
-    # To be safe, we can manually set the deck.
     remaining_ids = [TEST_WORD_ID_5, TEST_WORD_ID_6, TEST_WORD_ID_7, TEST_WORD_ID_8, TEST_WORD_ID_9]
     manager.deck = remaining_ids
 

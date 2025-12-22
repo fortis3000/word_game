@@ -16,7 +16,6 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-# Models
 class StartGameResponse(BaseModel):
     session_id: str
     game_state: GameState
@@ -99,12 +98,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve Static Files
-# We will mount static files at the end
-
-
-# API Endpoints
-
 
 @app.post("/api/game/start", response_model=StartGameResponse)
 async def start_game(lang: str = "en", seed: str | None = None):
@@ -114,7 +107,6 @@ async def start_game(lang: str = "en", seed: str | None = None):
     session_id, word_manager = await manager.create_game(lang=lang, seed=seed)
 
     game = WordGame(word_manager, client)
-    # word_manager.init_game() is already called in create_game with the seed
 
     manager.games[session_id] = game
 
@@ -156,8 +148,6 @@ async def play_round(session_id: str, request: PlayRequest):
 async def stop_game(session_id: str):
     manager: GameManager = app.state.game_manager
     if session_id not in manager.games:
-        # If game not found, just return empty/zero stats or 404.
-        # For idempotency, maybe just return 0? But 404 is cleaner if we assume valid flow.
         raise HTTPException(status_code=404, detail="Game session not found")
 
     game = manager.games[session_id]

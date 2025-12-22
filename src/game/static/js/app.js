@@ -63,20 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlLang = params.get('lang');
     let autoStarted = false;
 
-    // Debug Param
-    // alert(`DEBUG Init: search=${window.location.search}, lang=${urlLang}`);
     console.log(`DEBUG Init: search=${window.location.search}, lang=${urlLang}`);
-
-    // TEMPORARY DEBUG ALERT
-    // alert(`URL: ${window.location.href}\nParams: ${window.location.search}\nLang: ${urlLang}`);
 
     if (urlLang && ['en', 'de', 'ru'].includes(urlLang)) {
         console.log("Auto-starting game with language:", urlLang);
         selectedLang = urlLang;
 
-        // Visual feedback for selected language
         langBtns.forEach(b => {
-            // Reset all
             b.style.border = 'none';
             b.style.opacity = '0.7';
 
@@ -89,9 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto-click start logic
         instructionText.textContent = getInstructionText(selectedLang);
         startBtn.textContent = getStartBtnText(selectedLang);
-
-        // Ensure menu is hidden if startGame doesn't do it fast enough (though startGame does call showGameArea)
-        // startScreen.classList.add('hidden'); 
 
         // Immediate start
         startGame();

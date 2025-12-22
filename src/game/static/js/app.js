@@ -16,6 +16,8 @@ const restartBtn = document.getElementById('restart-btn');
 const backToMenuBtn = document.getElementById('back-to-menu-btn');
 const submitBtn = document.getElementById('submit-btn');
 const hintBtn = document.getElementById('hint-btn');
+const shareScoreBtnGameover = document.getElementById('share-score-btn-gameover');
+const shareScoreBtnSummary = document.getElementById('share-score-btn-summary');
 
 // Language Buttons
 const langBtns = document.querySelectorAll('.lang-btn');
@@ -49,6 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.addEventListener('click', submitWord);
     hintBtn.addEventListener('click', showHint);
 
+    if (shareScoreBtnGameover) {
+        shareScoreBtnGameover.addEventListener('click', () => shareScore(finalScoreEl.textContent));
+    }
+    if (shareScoreBtnSummary) {
+        shareScoreBtnSummary.addEventListener('click', () => shareScore(summaryScoreEl.textContent));
+    }
+
     wordInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             submitWord();
@@ -56,8 +65,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial Load
+    // Initial Load
     showMainMenu();
 });
+
+function shareScore(score) {
+    if (window.Telegram && window.Telegram.WebApp) {
+        const params = new URLSearchParams(window.location.search);
+        const seed = params.get('seed') || 'random';
+
+        const data = {
+            score: parseInt(score),
+            seed: seed
+        };
+
+        console.log("Sending data to bot:", data);
+        window.Telegram.WebApp.sendData(JSON.stringify(data));
+    } else {
+        showToast("Not running in Telegram!", "warning");
+    }
+}
 
 function selectLanguage(lang, btn) {
     if (!lang) return;

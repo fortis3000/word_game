@@ -1,6 +1,7 @@
 """Telegram bot for launching the Word Similarity Game Web App."""
 
 import os
+import json
 
 from telegram import (
     Update,
@@ -18,6 +19,8 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     InlineQueryHandler,
+    MessageHandler,
+    filters,
 )
 
 from src.utils.logger import get_logger
@@ -75,41 +78,104 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
 
 
-async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the inline query. This is triggered when user types @botname ..."""
-    # query = update.inline_query.query # Not used yet, maybe for custom seeds later?
+async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle data sent from the Web App (score sharing)."""
+    if not update.effective_message or not update.effective_message.web_app_data:
+        return
 
     try:
-        # Generate a unique seed for this challenge
-        seed = str(uuid.uuid4())[:8]
+        data = json.loads(update.effective_message.web_app_data.data)
+        score = data.get("score", 0)
+        seed = data.get("seed", "random")
 
-        # Get bot username for deep linking
-        bot_username = context.bot.username
-        if not bot_username:
-            # Fallback if username not cached yet (shouldn't happen usually)
-            me = await context.bot.get_me()
-            bot_username = me.username
+        logger.info(f"Received web app data: score={score}, seed={seed}")
 
-        deep_link = f"https://t.me/{bot_username}?start={seed}"
+        # Create a button to share the score via inline query
+        # We use a specific prefix "score" to distinguish from normal challenges
+        query_text = f"score {score} {seed}"
 
-        logger.info(f"Generating inline query result with deep link: {deep_link}")
-
-        # NOTE: we used simple URL button instead of web_app because web_app buttons
-        # are not supported in inline query results (unless configured specifically or if restrictive).
-        # Using deep link is safer and reliable.
-        results = [
-            InlineQueryResultArticle(
-                id=str(uuid.uuid4()),
-                title="⚔️ Challenge Friend",
-                description="Send a PvP invitation",
-                input_message_content=InputTextMessageContent(
-                    f"I challenge you to a game of Context! ⚔️\nCan you beat my score?"
-                ),
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("Accept Challenge 🎮", url=deep_link)]]
-                ),
-            )
+        keyboard = [
+            [InlineKeyboardButton("Share Score 📢", switch_inline_query=query_text)],
+            [InlineKeyboardButton("Play Again 🔄", web_app=WebAppInfo(url=GAME_URL))],
         ]
+
+        await update.message.reply_text(
+            f"Game Over! 🏁\n\nYou scored: *{score}*\n\nShare your result with your friends!",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
+
+    except Exception as e:
+        logger.error(f"Error processing web app data: {e}", exc_info=True)
+
+
+async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the inline query. Triggered when user types @botname ..."""
+    query = update.inline_query.query
+
+    try:
+        results = []
+
+        # Scenario 1: Share Score (query starts with "score")
+        if query.startswith("score"):
+            parts = query.split()
+            # Expected format: "score <value> <seed>"
+            if len(parts) >= 3:
+                score = parts[1]
+                seed = parts[2]
+
+                # Get bot username for deep linking
+                bot_username = context.bot.username
+                if not bot_username:
+                    me = await context.bot.get_me()
+                    bot_username = me.username
+
+                # Link to play the SAME seed
+                deep_link = f"https://t.me/{bot_username}?start={seed}"
+
+                results.append(
+                    InlineQueryResultArticle(
+                        id=str(uuid.uuid4()),
+                        title=f"I scored {score}!",
+                        description=f"Can you beat my score on seed {seed}?",
+                        input_message_content=InputTextMessageContent(
+                            f"I scored *{score}* in the Word Game! 🏆\n\nCan you beat me? 👇"
+                        ),
+                        reply_markup=InlineKeyboardMarkup(
+                            [[InlineKeyboardButton("Accept Challenge ⚔️", url=deep_link)]]
+                        ),
+                    )
+                )
+
+        # Scenario 2: Default "New Challenge" (empty query or just random typing)
+        else:
+            # Generate a unique seed for this challenge
+            seed = str(uuid.uuid4())[:8]
+
+            # Get bot username for deep linking
+            bot_username = context.bot.username
+            if not bot_username:
+                # Fallback if username not cached yet (shouldn't happen usually)
+                me = await context.bot.get_me()
+                bot_username = me.username
+
+            deep_link = f"https://t.me/{bot_username}?start={seed}"
+
+            logger.info(f"Generating inline query result with deep link: {deep_link}")
+
+            results.append(
+                InlineQueryResultArticle(
+                    id=str(uuid.uuid4()),
+                    title="⚔️ Challenge Friend",
+                    description="Send a PvP invitation",
+                    input_message_content=InputTextMessageContent(
+                        f"I challenge you to a game of Context! ⚔️\nCan you beat my score?"
+                    ),
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton("Accept Challenge 🎮", url=deep_link)]]
+                    ),
+                )
+            )
 
         await update.inline_query.answer(results, cache_time=0)
     except Exception as e:
@@ -139,6 +205,8 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(InlineQueryHandler(inline_query))
+    # Handle Web App Data (Sent when user clicks Share Score in the Game)
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
     # No CallbackQueryHandler needed anymore
 
     # Run the bot

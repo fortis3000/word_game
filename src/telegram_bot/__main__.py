@@ -38,11 +38,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     logger.info(f"User {user_id} initiated /start command.")
 
-    # Create Web App Button
-    # Link directly to the game URL, language selection happens in the UI
     play_text = "Play Word Game 🎮"
 
-    # Check for deep linking arguments (seed)
     # Check for deep linking arguments (seed)
     current_game_url = GAME_URL
     if context.args and len(context.args) > 0:

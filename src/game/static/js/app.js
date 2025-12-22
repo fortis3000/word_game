@@ -140,9 +140,6 @@ function shareScore(score) {
 
             console.log("Switching to inline query with:", query);
 
-            // Debug alert to confirm this code is running
-            // alert(`Debug: switchInlineQuery('${query}')`);
-
             // This opens the chat selection menu to share the result
             window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
         } catch (e) {

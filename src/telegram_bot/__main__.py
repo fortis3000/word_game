@@ -169,7 +169,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     title="⚔️ Challenge Friend",
                     description="Send a PvP invitation",
                     input_message_content=InputTextMessageContent(
-                        f"I challenge you to a game of Context! ⚔️\nCan you beat my score?"
+                        "I challenge you to a game of Context! ⚔️\nCan you beat my score?"
                     ),
                     reply_markup=InlineKeyboardMarkup(
                         [[InlineKeyboardButton("Accept Challenge 🎮", url=deep_link)]]

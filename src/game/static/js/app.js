@@ -70,16 +70,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (urlLang && ['en', 'de', 'ru'].includes(urlLang)) {
         console.log("Auto-starting game with language:", urlLang);
         selectedLang = urlLang;
-        // Visual feedback for selected language (optional, but good for consistency)
+
+        // Visual feedback for selected language
         langBtns.forEach(b => {
-            if (b.dataset.lang === urlLang) b.classList.add('active');
-            else b.classList.remove('active');
+            // Reset all
+            b.style.border = 'none';
+            b.style.opacity = '0.7';
+
+            if (b.dataset.lang === urlLang) {
+                b.style.border = '2px solid var(--accent)';
+                b.style.opacity = '1';
+            }
         });
 
         // Auto-click start logic
         instructionText.textContent = getInstructionText(selectedLang);
-        instructionText.classList.remove('hidden');
-        startBtn.classList.remove('hidden');
+        startBtn.textContent = getStartBtnText(selectedLang);
+
+        // Ensure menu is hidden if startGame doesn't do it fast enough (though startGame does call showGameArea)
+        // startScreen.classList.add('hidden'); 
 
         // Immediate start
         startGame();
@@ -97,6 +106,25 @@ document.addEventListener('DOMContentLoaded', () => {
         showMainMenu();
     }
 });
+
+// Helper to get text without selecting (for auto-start usage)
+function getStartBtnText(lang) {
+    const btnTexts = {
+        'en': "Start Game",
+        'de': "Spiel Starten",
+        'ru': "Начать игру"
+    };
+    return btnTexts[lang] || btnTexts['en'];
+}
+
+function getInstructionText(lang) {
+    const texts = {
+        'en': "Explore semantic relationships. Find words closely related to the hidden context.",
+        'de': "Erforsche semantische Zusammenhänge. Finde Wörter, die dem versteckten Kontext nahe stehen.",
+        'ru': "Исследуйте смысловые связи. Найдите слова, близкие к скрытому контексту."
+    };
+    return texts[lang] || texts['en'];
+}
 
 function shareScore(score) {
     if (window.Telegram && window.Telegram.WebApp) {

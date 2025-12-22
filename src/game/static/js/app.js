@@ -74,15 +74,16 @@ function shareScore(score) {
         const params = new URLSearchParams(window.location.search);
         const seed = params.get('seed') || 'random';
 
-        const data = {
-            score: parseInt(score),
-            seed: seed
-        };
+        // Format: score <score> <seed>
+        const query = `score ${score} ${seed}`;
 
-        console.log("Sending data to bot:", data);
-        window.Telegram.WebApp.sendData(JSON.stringify(data));
+        console.log("Switching to inline query with:", query);
+
+        // This opens the chat selection menu to share the result
+        // The user selects a chat, and 'via @bot score ...' is inserted
+        window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
     } else {
-        showToast("Not running in Telegram!", "warning");
+        showToast("Feature only available in Telegram!", "warning");
     }
 }
 

@@ -1,7 +1,6 @@
 """Telegram bot for launching the Word Similarity Game Web App."""
 
 import os
-import json
 
 from telegram import (
     Update,
@@ -19,8 +18,6 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     InlineQueryHandler,
-    MessageHandler,
-    filters,
 )
 
 from src.utils.logger import get_logger
@@ -76,37 +73,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     help_text = "Click 'Play Word Game' to open the app and start playing! You can search for words related to a hidden context."
 
     await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
-
-
-async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle data sent from the Web App (score sharing)."""
-    if not update.effective_message or not update.effective_message.web_app_data:
-        return
-
-    try:
-        data = json.loads(update.effective_message.web_app_data.data)
-        score = data.get("score", 0)
-        seed = data.get("seed", "random")
-
-        logger.info(f"Received web app data: score={score}, seed={seed}")
-
-        # Create a button to share the score via inline query
-        # We use a specific prefix "score" to distinguish from normal challenges
-        query_text = f"score {score} {seed}"
-
-        keyboard = [
-            [InlineKeyboardButton("Share Score 📢", switch_inline_query=query_text)],
-            [InlineKeyboardButton("Play Again 🔄", web_app=WebAppInfo(url=GAME_URL))],
-        ]
-
-        await update.message.reply_text(
-            f"Game Over! 🏁\n\nYou scored: *{score}*\n\nShare your result with your friends!",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
-
-    except Exception as e:
-        logger.error(f"Error processing web app data: {e}", exc_info=True)
 
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -205,8 +171,6 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(InlineQueryHandler(inline_query))
-    # Handle Web App Data (Sent when user clicks Share Score in the Game)
-    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
     # No CallbackQueryHandler needed anymore
 
     # Run the bot

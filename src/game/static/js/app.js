@@ -71,19 +71,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function shareScore(score) {
     if (window.Telegram && window.Telegram.WebApp) {
-        const params = new URLSearchParams(window.location.search);
-        const seed = params.get('seed') || 'random';
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const seed = params.get('seed') || 'random';
 
-        // Format: score <score> <seed>
-        const query = `score ${score} ${seed}`;
+            // Format: score <score> <seed>
+            const query = `score ${score} ${seed}`;
 
-        console.log("Switching to inline query with:", query);
+            console.log("Switching to inline query with:", query);
 
-        // This opens the chat selection menu to share the result
-        // The user selects a chat, and 'via @bot score ...' is inserted
-        window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
+            // Debug alert to confirm this code is running
+            // alert(`Debug: switchInlineQuery('${query}')`);
+
+            // This opens the chat selection menu to share the result
+            window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
+        } catch (e) {
+            console.error("switchInlineQuery failed:", e);
+            showToast(`Error: ${e.message}`, 'error');
+            alert(`Error: ${e.message}`);
+        }
     } else {
-        showToast("Feature only available in Telegram!", "warning");
+        const msg = "Feature only available in Telegram!";
+        showToast(msg, "warning");
+        alert(msg);
     }
 }
 

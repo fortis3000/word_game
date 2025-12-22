@@ -65,6 +65,35 @@ async def test_start_command_with_seed():
 
 
 @pytest.mark.asyncio
+async def test_start_command_with_seed_and_lang():
+    """Test start command with seed and language argument (PvP mode)."""
+    update = MagicMock()
+    update.effective_user.id = TEST_USER_ID
+    update.message.reply_text = AsyncMock()
+
+    context = MagicMock()
+    seed = "test-seed-123"
+    lang = "de"
+    arg = f"{seed}_{lang}"
+    context.args = [arg]
+
+    await start(update, context)
+
+    update.message.reply_text.assert_called_once()
+    call_args = update.message.reply_text.call_args
+
+    # Check PvP text
+    assert "Welcome to the PvP Challenge!" in call_args[0][0]
+
+    # Check WebApp URL has seed and lang
+    reply_markup = call_args[1]["reply_markup"]
+    button = reply_markup.inline_keyboard[0][0]
+    separator = "&" if "?" in GAME_URL else "?"
+    expected_url = f"{GAME_URL}{separator}seed={seed}&lang={lang}"
+    assert button.web_app.url == expected_url
+
+
+@pytest.mark.asyncio
 async def test_help_command():
     """Test the help_command sends the correct help text."""
     update = MagicMock()

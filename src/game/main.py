@@ -173,7 +173,7 @@ class WordManager:
         # Game is over if deck is empty AND we have cleared current words (or purely if deck is empty? User logic seems to imply clearing everything)
         # Original logic: len(get_available_words()) == 0.
         # With deck: available words are just those in the deck.
-        game_over = len(self.deck) == 0 and len(self.current_words) == 0
+        # game_over = len(self.deck) == 0 and len(self.current_words) == 0
         # Start logic used available=0 -> game over.
         # But if deck is empty but we still have words on screen, we play until screen is clear?
         # Let's match original intent: "No available words to add" -> Eventually clear screen.

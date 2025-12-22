@@ -43,14 +43,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     play_text = "Play Word Game 🎮"
 
     # Check for deep linking arguments (seed)
+    # Check for deep linking arguments (seed)
     current_game_url = GAME_URL
     if context.args and len(context.args) > 0:
-        seed = context.args[0]
-        # Validate seed is safe (alphanumeric check handled by Telegram usually, but good to be safe)
-        if len(seed) < 20:  # Simple length check
-            separator = "&" if "?" in current_game_url else "?"
-            current_game_url = f"{current_game_url}{separator}seed={seed}"
-            logger.info(f"Starting game with seed: {seed}")
+        arg = context.args[0]
+        # Check if argument contains language: seed_lang
+        if "_" in arg:
+            seed, lang = arg.split("_", 1)
+            # Validate simple length check
+            if len(seed) < 20:
+                separator = "&" if "?" in current_game_url else "?"
+                current_game_url = f"{current_game_url}{separator}seed={seed}&lang={lang}"
+                logger.info(f"Starting game with seed: {seed}, lang: {lang}")
+        else:
+            # Fallback for old style simple seed
+            seed = arg
+            if len(seed) < 20:
+                separator = "&" if "?" in current_game_url else "?"
+                current_game_url = f"{current_game_url}{separator}seed={seed}"
+                logger.info(f"Starting game with seed: {seed}")
 
     keyboard = [[InlineKeyboardButton(play_text, web_app=WebAppInfo(url=current_game_url))]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -77,7 +88,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the inline query. Triggered when user types @botname ..."""
-    query = update.inline_query.query
+    query = update.inline_query.query if update.inline_query else ""
 
     try:
         results = []
@@ -125,25 +136,28 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 me = await context.bot.get_me()
                 bot_username = me.username
 
-            deep_link = f"https://t.me/{bot_username}?start={seed}"
-
-            logger.info(f"Generating inline query result with deep link: {deep_link}")
-
-            results.append(
-                InlineQueryResultArticle(
+            # Helper to create result for a language
+            def create_lang_result(lang_code, lang_name):
+                deep_link = f"https://t.me/{bot_username}?start={seed}_{lang_code}"
+                return InlineQueryResultArticle(
                     id=str(uuid.uuid4()),
-                    title="⚔️ Challenge Friend",
-                    description="Send a PvP invitation",
+                    title=f"Challenge in {lang_name}",
+                    description=f"Send a {lang_name} PvP invitation",
                     input_message_content=InputTextMessageContent(
-                        "I challenge you to a game of Context! ⚔️\nCan you beat my score?"
+                        f"I challenge you to a game of Context ({lang_name})! ⚔️\nCan you beat my score?"
                     ),
                     reply_markup=InlineKeyboardMarkup(
                         [[InlineKeyboardButton("Accept Challenge 🎮", url=deep_link)]]
                     ),
                 )
-            )
 
-        await update.inline_query.answer(results, cache_time=0)
+            logger.info(f"Generating language specific inline query results with seed: {seed}")
+
+            results.append(create_lang_result("en", "English"))
+            results.append(create_lang_result("de", "German"))
+            results.append(create_lang_result("ru", "Russian"))
+
+        await update.inline_query.answer(results, cache_time=0) if update.inline_query else None
     except Exception as e:
         logger.error(f"Error in inline query handler: {e}", exc_info=True)
 

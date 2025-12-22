@@ -58,6 +58,28 @@ document.addEventListener('DOMContentLoaded', () => {
         shareScoreBtnSummary.addEventListener('click', () => shareScore(summaryScoreEl.textContent));
     }
 
+    // Check for auto-start parameters (seed + lang)
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get('lang');
+
+    if (urlLang && ['en', 'de', 'ru'].includes(urlLang)) {
+        console.log("Auto-starting game with language:", urlLang);
+        selectedLang = urlLang;
+        // Visual feedback for selected language (optional, but good for consistency)
+        langBtns.forEach(b => {
+            if (b.dataset.lang === urlLang) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+
+        // Auto-click start logic
+        instructionText.textContent = getInstructionText(selectedLang);
+        instructionText.classList.remove('hidden');
+        startBtn.classList.remove('hidden');
+
+        // Immediate start
+        startGame();
+    }
+
     wordInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             submitWord();

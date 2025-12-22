@@ -1,4 +1,3 @@
-import pytest
 from src.game.main import WordManager
 
 

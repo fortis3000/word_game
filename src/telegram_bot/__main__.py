@@ -42,14 +42,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Link directly to the game URL, language selection happens in the UI
     play_text = "Play Word Game 🎮"
 
-    keyboard = [[InlineKeyboardButton(play_text, web_app=WebAppInfo(url=GAME_URL))]]
+    # Check for deep linking arguments (seed)
+    current_game_url = GAME_URL
+    if context.args and len(context.args) > 0:
+        seed = context.args[0]
+        # Validate seed is safe (alphanumeric check handled by Telegram usually, but good to be safe)
+        if len(seed) < 20:  # Simple length check
+            separator = "&" if "?" in current_game_url else "?"
+            current_game_url = f"{current_game_url}{separator}seed={seed}"
+            logger.info(f"Starting game with seed: {seed}")
+
+    keyboard = [[InlineKeyboardButton(play_text, web_app=WebAppInfo(url=current_game_url))]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Simple welcome message
-    await update.message.reply_text(
-        "Welcome to the Word Context Game! 🎮\n\nClick the button below to start playing.",
-        reply_markup=reply_markup,
-    )
+    # Message text
+    msg = "Welcome to the Word Context Game! 🎮\n\nClick the button below to start playing."
+    if context.args:
+        msg = "Welcome to the PvP Challenge! ⚔️\n\nClick below to accept the duel."
+
+    await update.message.reply_text(msg, reply_markup=reply_markup)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -68,37 +79,41 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Handle the inline query. This is triggered when user types @botname ..."""
     # query = update.inline_query.query # Not used yet, maybe for custom seeds later?
 
-    # Generate a unique seed for this challenge
-    # We can use the query text as part of the seed if we want, or just random
-    seed = str(uuid.uuid4())[:8]
+    try:
+        # Generate a unique seed for this challenge
+        seed = str(uuid.uuid4())[:8]
 
-    # Handle URL construction safely
-    separator = "&" if "?" in GAME_URL else "?"
-    game_url_with_seed = f"{GAME_URL}{separator}seed={seed}"
+        # Get bot username for deep linking
+        bot_username = context.bot.username
+        if not bot_username:
+            # Fallback if username not cached yet (shouldn't happen usually)
+            me = await context.bot.get_me()
+            bot_username = me.username
 
-    logger.info(f"Generating inline query result with seed: {seed}")
+        deep_link = f"https://t.me/{bot_username}?start={seed}"
 
-    results = [
-        InlineQueryResultArticle(
-            id=str(uuid.uuid4()),
-            title="⚔️ Challenge Friend",
-            description="Send a PvP invitation",
-            input_message_content=InputTextMessageContent(
-                "I challenge you to a game of Context! ⚔️\nCan you beat my score?"
-            ),
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "Accept Challenge 🎮", web_app=WebAppInfo(url=game_url_with_seed)
-                        )
-                    ]
-                ]
-            ),
-        )
-    ]
+        logger.info(f"Generating inline query result with deep link: {deep_link}")
 
-    await update.inline_query.answer(results, cache_time=0)
+        # NOTE: we used simple URL button instead of web_app because web_app buttons
+        # are not supported in inline query results (unless configured specifically or if restrictive).
+        # Using deep link is safer and reliable.
+        results = [
+            InlineQueryResultArticle(
+                id=str(uuid.uuid4()),
+                title="⚔️ Challenge Friend",
+                description="Send a PvP invitation",
+                input_message_content=InputTextMessageContent(
+                    f"I challenge you to a game of Context! ⚔️\nCan you beat my score?"
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("Accept Challenge 🎮", url=deep_link)]]
+                ),
+            )
+        ]
+
+        await update.inline_query.answer(results, cache_time=0)
+    except Exception as e:
+        logger.error(f"Error in inline query handler: {e}", exc_info=True)
 
 
 async def post_init(application: Application) -> None:

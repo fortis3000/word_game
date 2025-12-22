@@ -27,7 +27,10 @@ class WordManager:
         self.current_words: Set[int] = set()
         self.seen_words: Set[int] = set()
         self.target_words_count = target_words_count
+        self.target_words_count = target_words_count
         self.total_score = 0
+        self.deck: List[int] = []
+        self.rng = random.Random()
         logger.info(
             f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}"
         )
@@ -38,19 +41,32 @@ class WordManager:
         logger.debug(f"Found {len(available)} available words.")
         return available
 
-    def init_game(self) -> None:
-        """Initialize the game with random words."""
-        available = self.get_available_words()
-        if not available:
+    def init_game(self, seed: str | int | None = None) -> None:
+        """Initialize the game with random words using optional seed."""
+        # Setup RNG
+        self.rng = random.Random(seed)
+
+        # Create a deterministic deck
+        # 1. Get all IDs
+        all_ids = sorted(list(self.all_words.keys()))
+        # 2. Shuffle deterministically
+        self.rng.shuffle(all_ids)
+        # 3. Store as deck
+        self.deck = all_ids
+
+        if not self.deck:
             logger.error("No words available to start the game. Please check the word list.")
             raise ValueError("No words available to start the game!")
 
-        self.current_words = set(
-            random.sample(list(available.keys()), min(self.target_words_count, len(available)))
-        )
-        self.seen_words.update(self.current_words)
+        # Draw initial words
+        num_initial = min(self.target_words_count, len(self.deck))
+        self.current_words = set(self.deck[:num_initial])
+        self.deck = self.deck[num_initial:]
+
+        self.seen_words = set(self.current_words)
+
         logger.info(
-            f"Game initialized with words: {self.get_current_words()} (IDs: {list(self.current_words)})"
+            f"Game initialized with seed={seed}, words: {self.get_current_words()} (IDs: {list(self.current_words)})"
         )
 
     def get_current_words(self) -> List[str]:
@@ -128,23 +144,24 @@ class WordManager:
         return removed_words, new_words, round_score
 
     def _add_random_words(self) -> List[str]:
-        """Add random words to maintain target count."""
+        """Add random words from the deck to maintain target count."""
         needed = self.target_words_count - len(self.current_words)
         logger.debug(f"Need to add {needed} words.")
         if needed <= 0:
             logger.debug("No new words needed to maintain target count.")
             return []
 
-        available = self.get_available_words()
-        if not available:
-            logger.warning(
-                "No available words to add. All words have been seen or are currently in play."
-            )
+        if not self.deck:
+            logger.warning("No more words in the deck to add.")
             return []
 
-        new_ids = set(random.sample(list(available.keys()), min(needed, len(available))))
+        num_to_add = min(needed, len(self.deck))
+        new_ids = set(self.deck[:num_to_add])
+        self.deck = self.deck[num_to_add:]
+
         self.current_words.update(new_ids)
         self.seen_words.update(new_ids)
+
         added_words = [self.all_words[k] for k in new_ids]
         logger.info(
             f"Added {len(added_words)} new words: {added_words} (IDs: {list(new_ids)}) to maintain target count."
@@ -153,9 +170,35 @@ class WordManager:
 
     def is_game_over(self) -> bool:
         """Check if all words have been seen."""
-        game_over = len(self.get_available_words()) == 0
-        logger.debug(f"Game over status: {game_over}")
-        return game_over
+        # Game is over if deck is empty AND we have cleared current words (or purely if deck is empty? User logic seems to imply clearing everything)
+        # Original logic: len(get_available_words()) == 0.
+        # With deck: available words are just those in the deck.
+        game_over = len(self.deck) == 0 and len(self.current_words) == 0
+        # Start logic used available=0 -> game over.
+        # But if deck is empty but we still have words on screen, we play until screen is clear?
+        # Let's match original intent: "No available words to add" -> Eventually clear screen.
+        # Actually the original code strictly checked available words (hidden words).
+        # Let's say game over if deck is empty.
+        # Wait, if deck is empty, you can still match words on screen!
+        # Original: `game_over = len(self.get_available_words()) == 0`
+        # `get_available_words` was all_words - seen_words.
+        # If I have 5 words on screen, seen=5. total=100. available=95.
+        # If I match all 100, then seen=100. available=0.
+        # So yes, game over is when deck is empty AND current_words is empty?
+        # Or just when we can't add more?
+        # Usually Solitaire ends when you can't make moves, but here we can make moves if words are on screen.
+        # So game over should be when deck is empty AND current words are gone (or unmatchable, but we don't check unmatchable yet).
+        # Let's stick to: Deck empty means no new words.
+
+        # Re-reading original: `game_over = len(self.get_available_words()) == 0`.
+        # `available` means "in the bag".
+        # If bag is empty, `is_game_over` returns True immediately?
+        # That would mean you can't finish the last 5 words. That seems like a bug in original or I misunderstood.
+        # In main loop: `while not word_manager.is_game_over():`.
+        # If bag is empty, loop breaks. You never play the last 5 words.
+        # I should probably fix this to be "Deck empty AND current words empty".
+
+        return len(self.deck) == 0 and len(self.current_words) == 0
 
 
 class GameState(BaseModel):

@@ -94,9 +94,8 @@ def test_word_manager_get_available_words(sample_words):
 
 
 def test_word_manager_init_game(sample_words):
-    random.seed(42)  # for reproducible tests
     manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
-    manager.init_game()
+    manager.init_game(seed=42)
     assert len(manager.current_words) == TEST_TARGET_WORDS_COUNT
     assert manager.current_words.issubset(set(sample_words.keys()))
     assert manager.current_words == manager.seen_words
@@ -125,9 +124,8 @@ def test_word_manager_get_current_words(sample_words):
 
 
 def test_word_manager_process_guess(sample_words):
-    random.seed(42)
     manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
-    manager.init_game()
+    manager.init_game(seed=42)
     manager.current_words = {
         TEST_WORD_ID_0,
         TEST_WORD_ID_1,
@@ -135,6 +133,13 @@ def test_word_manager_process_guess(sample_words):
         TEST_WORD_ID_3,
         TEST_WORD_ID_4,
     }  # apple, banana, orange, grape, strawberry
+    # Fix deck: remove these from deck if they match what init_game did?
+    # init_game(seed=42) with sample_words(sorted keys 0..9)
+    # shuffled might produce different order.
+    # To be safe, we can manually set the deck.
+    remaining_ids = [TEST_WORD_ID_5, TEST_WORD_ID_6, TEST_WORD_ID_7, TEST_WORD_ID_8, TEST_WORD_ID_9]
+    manager.deck = remaining_ids
+
     manager.seen_words = {
         TEST_WORD_ID_0,
         TEST_WORD_ID_1,
@@ -168,9 +173,8 @@ def test_word_manager_process_guess(sample_words):
 
 
 def test_word_manager_process_guess_max_remove_limit(sample_words):
-    random.seed(42)
     manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
-    manager.init_game()
+    manager.init_game(seed=42)
     manager.current_words = {
         TEST_WORD_ID_0,
         TEST_WORD_ID_1,
@@ -178,6 +182,9 @@ def test_word_manager_process_guess_max_remove_limit(sample_words):
         TEST_WORD_ID_3,
         TEST_WORD_ID_4,
     }  # apple, banana, orange, grape, strawberry
+    remaining_ids = [TEST_WORD_ID_5, TEST_WORD_ID_6, TEST_WORD_ID_7, TEST_WORD_ID_8, TEST_WORD_ID_9]
+    manager.deck = remaining_ids
+
     manager.seen_words = {
         TEST_WORD_ID_0,
         TEST_WORD_ID_1,
@@ -210,9 +217,8 @@ def test_word_manager_process_guess_max_remove_limit(sample_words):
 
 
 def test_word_manager_process_guess_below_threshold(sample_words):
-    random.seed(42)
     manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
-    manager.init_game()
+    manager.init_game(seed=42)
     original_words = {
         TEST_WORD_ID_0,
         TEST_WORD_ID_1,
@@ -244,8 +250,9 @@ def test_word_manager_process_guess_below_threshold(sample_words):
 
 
 def test_word_manager_add_random_words(sample_words):
-    random.seed(42)
     manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
+    # Manually setup deck
+    manager.deck = [TEST_WORD_ID_5, TEST_WORD_ID_6, TEST_WORD_ID_7]
     manager.current_words = {TEST_WORD_ID_0, TEST_WORD_ID_1}  # Need 3 more words
     manager.seen_words = {
         TEST_WORD_ID_0,
@@ -283,9 +290,18 @@ def test_word_manager_is_game_over(sample_words):
     manager = WordManager(sample_words, target_words_count=TEST_ONE_WORD)
     manager.current_words = {TEST_WORD_ID_0}
     manager.seen_words = set(sample_words.keys())  # All words seen
+
+    # Deck is empty by default in init, so deck empty = True.
+    # Current words not empty. -> Game Over False.
+    assert not manager.is_game_over()
+
+    # Now clear current words
+    manager.current_words = set()
     assert manager.is_game_over()
 
-    manager.seen_words = {TEST_WORD_ID_0, TEST_WORD_ID_1}  # Not all words seen
+    # If deck has words
+    manager.deck = [TEST_WORD_ID_1]
+    manager.current_words = set()
     assert not manager.is_game_over()
 
 

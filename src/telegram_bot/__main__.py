@@ -8,12 +8,16 @@ from telegram import (
     InlineKeyboardButton,
     WebAppInfo,
     BotCommand,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
 )
+import uuid
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
+    InlineQueryHandler,
 )
 
 from src.utils.logger import get_logger
@@ -60,6 +64,43 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
 
 
+async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the inline query. This is triggered when user types @botname ..."""
+    # query = update.inline_query.query # Not used yet, maybe for custom seeds later?
+
+    # Generate a unique seed for this challenge
+    # We can use the query text as part of the seed if we want, or just random
+    seed = str(uuid.uuid4())[:8]
+
+    # Handle URL construction safely
+    separator = "&" if "?" in GAME_URL else "?"
+    game_url_with_seed = f"{GAME_URL}{separator}seed={seed}"
+
+    logger.info(f"Generating inline query result with seed: {seed}")
+
+    results = [
+        InlineQueryResultArticle(
+            id=str(uuid.uuid4()),
+            title="⚔️ Challenge Friend",
+            description="Send a PvP invitation",
+            input_message_content=InputTextMessageContent(
+                "I challenge you to a game of Context! ⚔️\nCan you beat my score?"
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Accept Challenge 🎮", web_app=WebAppInfo(url=game_url_with_seed)
+                        )
+                    ]
+                ]
+            ),
+        )
+    ]
+
+    await update.inline_query.answer(results, cache_time=0)
+
+
 async def post_init(application: Application) -> None:
     """Set up persistent menu commands."""
     commands = [
@@ -82,6 +123,7 @@ def main() -> None:
     # Add handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(InlineQueryHandler(inline_query))
     # No CallbackQueryHandler needed anymore
 
     # Run the bot

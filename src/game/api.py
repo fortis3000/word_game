@@ -51,7 +51,9 @@ class GameManager:
         if not self.words:
             raise RuntimeError("No dictionaries loaded")
 
-    async def create_game(self, lang: str = "en") -> tuple[str, WordManager]:
+    async def create_game(
+        self, lang: str = "en", seed: str | None = None
+    ) -> tuple[str, WordManager]:
         session_id = str(uuid.uuid4())
 
         word_dict = self.words.get(lang)
@@ -61,6 +63,8 @@ class GameManager:
             word_dict = self.words[lang]
 
         word_manager = WordManager(word_dict, target_words_count=5)
+        # Pass seed to init_game. If seed is None, it uses random.
+        word_manager.init_game(seed=seed)
         return session_id, word_manager
 
 
@@ -103,14 +107,14 @@ app.add_middleware(
 
 
 @app.post("/api/game/start", response_model=StartGameResponse)
-async def start_game(lang: str = "en"):
+async def start_game(lang: str = "en", seed: str | None = None):
     manager: GameManager = app.state.game_manager
     client: EmbeddingClient = app.state.embedding_client
 
-    session_id, word_manager = await manager.create_game(lang=lang)
+    session_id, word_manager = await manager.create_game(lang=lang, seed=seed)
 
     game = WordGame(word_manager, client)
-    word_manager.init_game()
+    # word_manager.init_game() is already called in create_game with the seed
 
     manager.games[session_id] = game
 

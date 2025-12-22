@@ -125,7 +125,15 @@ async function startGame() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/start?lang=${selectedLang}`, { method: 'POST' });
+        const params = new URLSearchParams(window.location.search);
+        const seed = params.get('seed');
+
+        let url = `${API_BASE}/start?lang=${selectedLang}`;
+        if (seed) {
+            url += `&seed=${seed}`;
+        }
+
+        const response = await fetch(url, { method: 'POST' });
         if (!response.ok) throw new Error('Failed to start game');
 
         const data = await response.json();

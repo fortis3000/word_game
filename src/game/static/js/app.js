@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // alert(`DEBUG Init: search=${window.location.search}, lang=${urlLang}`);
     console.log(`DEBUG Init: search=${window.location.search}, lang=${urlLang}`);
 
+    // TEMPORARY DEBUG ALERT
+    // alert(`URL: ${window.location.href}\nParams: ${window.location.search}\nLang: ${urlLang}`);
+
     if (urlLang && ['en', 'de', 'ru'].includes(urlLang)) {
         console.log("Auto-starting game with language:", urlLang);
         selectedLang = urlLang;

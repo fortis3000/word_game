@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check for auto-start parameters (seed + lang)
     const params = new URLSearchParams(window.location.search);
     const urlLang = params.get('lang');
+    let autoStarted = false;
 
     if (urlLang && ['en', 'de', 'ru'].includes(urlLang)) {
         console.log("Auto-starting game with language:", urlLang);
@@ -78,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Immediate start
         startGame();
+        autoStarted = true;
     }
 
     wordInput.addEventListener('keydown', (e) => {
@@ -87,8 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial Load
-    // Initial Load
-    showMainMenu();
+    if (!autoStarted) {
+        showMainMenu();
+    }
 });
 
 function shareScore(score) {

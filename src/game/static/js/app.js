@@ -51,8 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
     quitBtn.addEventListener('click', quitGame);
     submitBtn.addEventListener('click', submitWord);
     hintBtn.addEventListener('click', showHint);
+
+    console.log("Checking for shuffle button:", shuffleBtn);
     if (shuffleBtn) {
+        console.log("Adding click listener to shuffle button");
         shuffleBtn.addEventListener('click', shuffleWords);
+    } else {
+        console.error("Shuffle button not found in DOM!");
     }
 
     if (shareScoreBtnGameover) {
@@ -208,7 +213,11 @@ function showHint() {
 }
 
 async function shuffleWords() {
-    if (!sessionId) return;
+    console.log("shuffleWords called. SessionId:", sessionId);
+    if (!sessionId) {
+        console.warn("No session ID, cannot shuffle.");
+        return;
+    }
 
     // Optional: Optimistic check (though API will also check)
     // const currentScore = parseInt(totalScoreEl.textContent || '0');

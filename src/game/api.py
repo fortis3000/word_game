@@ -144,6 +144,27 @@ async def play_round(session_id: str, request: PlayRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/game/{session_id}/shuffle", response_model=GameState)
+async def shuffle_words(session_id: str):
+    manager: GameManager = app.state.game_manager
+
+    if session_id not in manager.games:
+        raise HTTPException(status_code=404, detail="Game session not found")
+
+    game = manager.games[session_id]
+
+    try:
+        game_state = await game.shuffle_words()
+        return game_state
+    except ValueError as e:
+        logger.warning(f"Invalid shuffle request: {e}")
+        # Return 400 for logic errors (like not enough score)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error shuffling words: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/game/{session_id}/stop")
 async def stop_game(session_id: str):
     manager: GameManager = app.state.game_manager

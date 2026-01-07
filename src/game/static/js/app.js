@@ -16,6 +16,7 @@ const restartBtn = document.getElementById('restart-btn');
 const backToMenuBtn = document.getElementById('back-to-menu-btn');
 const submitBtn = document.getElementById('submit-btn');
 const hintBtn = document.getElementById('hint-btn');
+const shuffleBtn = document.getElementById('shuffle-btn');
 const shareScoreBtnGameover = document.getElementById('share-score-btn-gameover');
 const shareScoreBtnSummary = document.getElementById('share-score-btn-summary');
 
@@ -50,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
     quitBtn.addEventListener('click', quitGame);
     submitBtn.addEventListener('click', submitWord);
     hintBtn.addEventListener('click', showHint);
+    if (shuffleBtn) {
+        shuffleBtn.addEventListener('click', shuffleWords);
+    }
 
     if (shareScoreBtnGameover) {
         shareScoreBtnGameover.addEventListener('click', () => shareScore(finalScoreEl.textContent));
@@ -201,6 +205,47 @@ function showHint() {
         'ru': "Вводите слова, которые по смыслу похожи на отображаемые!"
     };
     showToast(hints[selectedLang] || hints['en'], 'info');
+}
+
+async function shuffleWords() {
+    if (!sessionId) return;
+
+    // Optional: Optimistic check (though API will also check)
+    // const currentScore = parseInt(totalScoreEl.textContent || '0');
+    // if (currentScore < 200) ...
+
+    try {
+        const response = await fetch(`${API_BASE}/${sessionId}/shuffle`, {
+            method: 'POST'
+        });
+
+        if (response.status === 400) {
+            // Not enough points
+            const errMsgs = {
+                'en': "Not enough points! Need 200.",
+                'de': "Nicht genug Punkte! Benötigt werden 200.",
+                'ru': "Недостаточно очков! Нужно 200."
+            };
+            showToast(errMsgs[selectedLang] || errMsgs['en'], 'warning');
+            return;
+        }
+
+        if (!response.ok) throw new Error('Failed to shuffle');
+
+        const gameState = await response.json();
+        updateUI(gameState);
+
+        const successMsgs = {
+            'en': "Words shuffled! -200 pts",
+            'de': "Wörter gemischt! -200 Pkt",
+            'ru': "Слова перемешаны! -200 очков"
+        };
+        showToast(successMsgs[selectedLang] || successMsgs['en'], 'success');
+
+    } catch (error) {
+        console.error('Error shuffling words:', error);
+        showToast('Error shuffling words.', 'error');
+    }
 }
 
 async function startGame() {

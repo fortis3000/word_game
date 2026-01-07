@@ -168,6 +168,31 @@ class WordManager:
         )
         return added_words
 
+    def shuffle_active_words(self) -> Tuple[List[str], List[str]]:
+        """Shuffle current words for a cost.
+
+        Returns:
+            tuple: (removed_words, added_words)
+        
+        Raises:
+            ValueError: If not enough score.
+        """
+        COST = 200
+        if self.total_score < COST:
+            raise ValueError("Not enough score to shuffle (need 200).")
+
+        self.total_score -= COST
+        
+        # Remove all current words
+        removed_words = [self.all_words[k] for k in self.current_words]
+        self.current_words.clear()
+        
+        # Add new words
+        new_words = self._add_random_words()
+        
+        logger.info(f"Shuffled words. Spent {COST} points. Removed: {removed_words}, Added: {new_words}")
+        return removed_words, new_words
+
     def is_game_over(self) -> bool:
         """Check if all words have been seen."""
         # Game is over if deck is empty AND we have cleared current deck
@@ -229,6 +254,26 @@ class WordGame:
             added_words=added_words,
             similarities=dict(zip(current_words, similarities)),
             round_score=round_score,
+            total_score=self.manager.total_score,
+            game_over=self.manager.is_game_over(),
+        )
+
+    async def shuffle_words(self) -> GameState:
+        """Shuffle the current words."""
+        removed_words, added_words = self.manager.shuffle_active_words()
+        
+        # Recalculate similarities might be skipped here as we don't have a user word
+        # But for the GameState we usually need similarities relative to *something*.
+        # However, until the user types a word, we might just return empty similarities?
+        # Or maybe we need to keep the last user word?
+        # For now, let's return empty similarities since the context changed completely.
+        
+        return GameState(
+            current_words=self.manager.get_current_words(),
+            removed_words=removed_words,
+            added_words=added_words,
+            similarities={}, # Reset similarities as words changed
+            round_score=0,
             total_score=self.manager.total_score,
             game_over=self.manager.is_game_over(),
         )

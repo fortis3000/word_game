@@ -25,8 +25,8 @@
                 <button class="primary-btn lang-btn" data-lang="ru">Русский</button>
             </div>
 
-            <p id="instruction-text" class="hidden">Explore semantic relationships. Find words closely related to the
-                hidden context.</p>
+            <p id="instruction-text" class="hidden">• Target a word with its synonym to get the maximum score and reveal
+                the theme.</p>
 
             <div class="menu-actions">
                 <button id="start-btn" class="primary-btn large-btn hidden">Start Game</button>
@@ -57,7 +57,7 @@
 
             <div class="words-container">
                 <div class="section current-words">
-                    <h3>Current Context</h3>
+                    <h3 id="context-header">Current Context</h3>
                     <div id="current-words-list" class="word-cloud">
                         <!-- Words injected here -->
                     </div>
@@ -65,7 +65,8 @@
             </div>
 
             <div class="input-area">
-                <input type="text" id="word-input" placeholder="Type a related word..." autocomplete="off">
+                <input type="text" id="word-input" placeholder="Type a word close to one or several on the screen..."
+                    autocomplete="off">
                 <button id="submit-btn" class="primary-btn">Submit</button>
             </div>
 

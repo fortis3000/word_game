@@ -1,235 +1,74 @@
-"""Telegram bot for running the word similarity game."""
+"""Telegram bot for launching the Word Similarity Game Web App."""
 
 import os
-import re
-from typing import Dict
 
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import (
+    Update,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    WebAppInfo,
+    BotCommand,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+)
+import uuid
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
-    MessageHandler,
-    filters,
+    InlineQueryHandler,
 )
-from telegram.helpers import escape_markdown
 
-from src.game.main import WordGame, WordManager
-from src.data.loader import load_words, load_config
-from src.shared.embedding_client import EmbeddingClient
 from src.utils.logger import get_logger
 from src.telegram_bot.message_manager import MessageManager
 
-# Define keyboards
-START_KEYBOARD = ReplyKeyboardMarkup([["/start"]], resize_keyboard=True, one_time_keyboard=True)
-STOP_KEYBOARD = ReplyKeyboardMarkup([["/stop"]], resize_keyboard=True)
-
 logger = get_logger(__name__)
 
-# Store active games and clients
-active_games: Dict[int, tuple[WordGame, WordManager, EmbeddingClient]] = {}
+# Game URL from environment
+GAME_URL = os.getenv("GAME_URL", "http://localhost:8080")
+
 message_manager = MessageManager()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /start is issued."""
+    """Send game launcher button."""
     if not update.message or not update.effective_user:
         return
     user_id = update.effective_user.id
     logger.info(f"User {user_id} initiated /start command.")
 
-    if user_id in active_games:
-        logger.warning(
-            f"User {user_id} tried to start a new game while one is active. Not starting a new game."
-        )
-        await update.message.reply_text(
-            message_manager.get_message("already_active_game", update.effective_user.language_code),
-            reply_markup=STOP_KEYBOARD,
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-        return
+    play_text = "Play Word Game 🎮"
 
-    # Load words and initialize game components
-    config = load_config()
-    words = load_words(config["data"]["default_dict"])
-    word_manager = WordManager(words, target_words_count=5)
-
-    # Create a new client for this game
-    client = EmbeddingClient(api_url=os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8000"))
-    await client.__aenter__()  # Initialize the client
-
-    game = WordGame(word_manager, client)
-    active_games[user_id] = (game, word_manager, client)
-    logger.info(f"New game successfully started for user {user_id}.")
-
-    # Initialize the game
-    word_manager.init_game()
-    current_words = word_manager.get_current_words()
-    logger.info(f"Game for user {user_id} initialized with words: {current_words}")
-
-    # Escape words for proper markdown rendering
-    current_words_escaped = [escape_markdown(w, version=2) for w in current_words]
-
-    await update.message.reply_text(
-        message_manager.get_message(
-            "welcome_message",
-            update.effective_user.language_code,
-            current_words=", ".join(current_words_escaped),
-        ),
-        reply_markup=STOP_KEYBOARD,
-        parse_mode=ParseMode.MARKDOWN_V2,
-    )
-
-
-async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Stop the current game."""
-    if not update.message or not update.effective_user:
-        return
-    user_id = update.effective_user.id
-    logger.info(f"User {user_id} initiated /stop command.")
-
-    if user_id in active_games:
-        game, word_manager, client = active_games[user_id]
-
-        # Capture stats before closing
-        total_score = word_manager.total_score
-        seen_count = len(word_manager.seen_words)
-
-        await client.__aexit__(None, None, None)  # Properly close the client
-        del active_games[user_id]
-        logger.info(f"Game successfully stopped for user {user_id}.")
-
-        summary_text = message_manager.get_message(
-            "game_summary",
-            update.effective_user.language_code,
-            total_score=total_score,
-            seen_count=seen_count,
-        )
-
-        await update.message.reply_text(
-            summary_text,
-            reply_markup=START_KEYBOARD,
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-    else:
-        logger.warning(f"User {user_id} tried to stop a game that wasn't active. No game to stop.")
-        await update.message.reply_text(
-            message_manager.get_message("no_active_game_stop", update.effective_user.language_code),
-            reply_markup=START_KEYBOARD,
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-
-
-async def handle_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle user's word submission."""
-    if not update.message or not update.effective_user:
-        return
-    user_id = update.effective_user.id
-    if not update.message.text:
-        return
-    user_word = update.message.text.strip()
-
-    # Validate input length
-    if len(user_word) > 50:
-        logger.warning(f"User {user_id} submitted word exceeding length limit: '{user_word}'")
-        await update.message.reply_text(
-            message_manager.get_message("input_too_long", update.effective_user.language_code),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-        return
-
-    # Validate characters (alphanumeric, spaces, hyphens, apostrophes)
-    if not re.match(r"^[a-zA-ZäöüÄÖÜß\s\-\']+$", user_word):
-        logger.warning(f"User {user_id} submitted word with invalid characters: '{user_word}'")
-        await update.message.reply_text(
-            message_manager.get_message("invalid_characters", update.effective_user.language_code),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-        return
-
-    logger.info(f"User {user_id} submitted word: '{user_word}'")
-
-    if user_id not in active_games:
-        logger.warning(
-            f"User {user_id} submitted word '{user_word}' without an active game. Prompting to start a game."
-        )
-        await update.message.reply_text(
-            message_manager.get_message("no_active_game_play", update.effective_user.language_code),
-            reply_markup=START_KEYBOARD,
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-        return
-
-    game, word_manager, client = active_games[user_id]
-
-    try:
-        result = await game.play_round(user_word)
-        logger.info(
-            f"Game round played for user {user_id} with word '{user_word}'. Game over: {result.game_over}. "
-            f"Removed words: {result.removed_words}, Added words: {result.added_words}"
-        )
-
-        # Prepare response message
-        lang = update.effective_user.language_code
-
-        # Escape dynamic variables
-        user_word_escaped = escape_markdown(user_word, version=2)
-        removed_words_escaped = [escape_markdown(w, version=2) for w in result.removed_words]
-        added_words_escaped = [escape_markdown(w, version=2) for w in result.added_words]
-        current_words_escaped = [escape_markdown(w, version=2) for w in result.current_words]
-
-        removed_words_text = (
-            ", ".join(removed_words_escaped)
-            if result.removed_words
-            else message_manager.get_message("none", lang)
-        )
-        added_words_text = (
-            ", ".join(added_words_escaped)
-            if result.added_words
-            else message_manager.get_message("none", lang)
-        )
-
-        # Choose message key based on whether words were removed
-        message_key = "round_result_strike" if result.removed_words else "round_result"
-
-        # Generate feedback
-        if result.removed_words:
-            feedback = message_manager.get_message(
-                "feedback_good", lang, count=len(result.removed_words)
-            )
+    # Check for deep linking arguments (seed)
+    current_game_url = GAME_URL
+    if context.args and len(context.args) > 0:
+        arg = context.args[0]
+        # Check if argument contains language: seed_lang
+        if "_" in arg:
+            seed, lang = arg.split("_", 1)
+            # Validate simple length check
+            if len(seed) < 20:
+                separator = "&" if "?" in current_game_url else "?"
+                current_game_url = f"{current_game_url}{separator}seed={seed}&lang={lang}"
+                logger.info(f"Starting game with seed: {seed}, lang: {lang}")
         else:
-            feedback = message_manager.get_message("feedback_bad", lang)
+            # Fallback for old style simple seed
+            seed = arg
+            if len(seed) < 20:
+                separator = "&" if "?" in current_game_url else "?"
+                current_game_url = f"{current_game_url}{separator}seed={seed}"
+                logger.info(f"Starting game with seed: {seed}")
 
-        response_text = message_manager.get_message(
-            message_key,
-            lang,
-            feedback=feedback,
-            user_word=user_word_escaped,
-            removed_words=removed_words_text,
-            added_words=added_words_text,
-            round_score=result.round_score,
-            total_score=result.total_score,
-            current_words=", ".join(current_words_escaped),
-        )
+    keyboard = [[InlineKeyboardButton(play_text, web_app=WebAppInfo(url=current_game_url))]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-        if result.game_over:
-            response_text += message_manager.get_message("game_over", lang)
-            game, word_manager, client = active_games[user_id]
-            await client.__aexit__(None, None, None)  # Properly close the client
-            del active_games[user_id]
-            logger.info(f"Game over for user {user_id}. Game state cleared.")
+    # Message text
+    msg = "Welcome to the Word Context Game! 🎮\n\nClick the button below to start playing."
+    if context.args:
+        msg = "Welcome to the PvP Challenge! ⚔️\n\nClick below to accept the duel."
 
-        logger.debug(f"Sending response to user {user_id}:\n{response_text}")
-
-        await update.message.reply_text(response_text, parse_mode=ParseMode.MARKDOWN_V2)
-
-    except Exception:
-        logger.exception(f"Error processing word '{user_word}' for user {user_id}.")
-        await update.message.reply_text(
-            message_manager.get_message("error_processing", update.effective_user.language_code),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
+    await update.message.reply_text(msg, reply_markup=reply_markup)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -238,13 +77,95 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     user_id = update.effective_user.id
     logger.info(f"User {user_id} requested /help command.")
-    help_text = message_manager.get_message("help_message", update.effective_user.language_code)
-    logger.debug(f"Sending help message to user {user_id}:\n{help_text}")
-    # If no active game, show start button, otherwise show stop button
-    keyboard = STOP_KEYBOARD if update.effective_user.id in active_games else START_KEYBOARD
-    await update.message.reply_text(
-        help_text, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
-    )
+
+    help_text = "Click 'Play Word Game' to open the app and start playing! You can search for words related to a hidden context."
+
+    await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
+
+
+async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the inline query. Triggered when user types @botname ..."""
+    query = update.inline_query.query if update.inline_query else ""
+
+    try:
+        results = []
+
+        # Scenario 1: Share Score (query starts with "score")
+        if query.startswith("score"):
+            parts = query.split()
+            # Expected format: "score <value> <seed>"
+            if len(parts) >= 3:
+                score = parts[1]
+                seed = parts[2]
+
+                # Get bot username for deep linking
+                bot_username = context.bot.username
+                if not bot_username:
+                    me = await context.bot.get_me()
+                    bot_username = me.username
+
+                # Link to play the SAME seed
+                deep_link = f"https://t.me/{bot_username}?start={seed}"
+
+                results.append(
+                    InlineQueryResultArticle(
+                        id=str(uuid.uuid4()),
+                        title=f"I scored {score}!",
+                        description=f"Can you beat my score on seed {seed}?",
+                        input_message_content=InputTextMessageContent(
+                            f"I scored *{score}* in the Word Game! 🏆\n\nCan you beat me? 👇"
+                        ),
+                        reply_markup=InlineKeyboardMarkup(
+                            [[InlineKeyboardButton("Accept Challenge ⚔️", url=deep_link)]]
+                        ),
+                    )
+                )
+
+        # Scenario 2: Default "New Challenge" (empty query or just random typing)
+        else:
+            # Generate a unique seed for this challenge
+            seed = str(uuid.uuid4())[:8]
+
+            # Get bot username for deep linking
+            bot_username = context.bot.username
+            if not bot_username:
+                # Fallback if username not cached yet (shouldn't happen usually)
+                me = await context.bot.get_me()
+                bot_username = me.username
+
+            # Helper to create result for a language
+            def create_lang_result(lang_code, lang_name):
+                deep_link = f"https://t.me/{bot_username}?start={seed}_{lang_code}"
+                return InlineQueryResultArticle(
+                    id=str(uuid.uuid4()),
+                    title=f"Challenge in {lang_name}",
+                    description=f"Send a {lang_name} PvP invitation",
+                    input_message_content=InputTextMessageContent(
+                        f"I challenge you to a game of Context ({lang_name})! ⚔️\nCan you beat my score?"
+                    ),
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton("Accept Challenge 🎮", url=deep_link)]]
+                    ),
+                )
+
+            logger.info(f"Generating language specific inline query results with seed: {seed}")
+
+            results.append(create_lang_result("en", "English"))
+            results.append(create_lang_result("de", "German"))
+            results.append(create_lang_result("ru", "Russian"))
+
+        await update.inline_query.answer(results, cache_time=0) if update.inline_query else None
+    except Exception as e:
+        logger.error(f"Error in inline query handler: {e}", exc_info=True)
+
+
+async def post_init(application: Application) -> None:
+    """Set up persistent menu commands."""
+    commands = [
+        BotCommand("start", "Start Game"),
+        BotCommand("help", "Help"),
+    ]
+    await application.bot.set_my_commands(commands)
 
 
 def main() -> None:
@@ -254,13 +175,14 @@ def main() -> None:
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
-    application = Application.builder().token(token).build()
+
+    application = Application.builder().token(token).post_init(post_init).build()
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("stop", stop))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_word))
+    application.add_handler(InlineQueryHandler(inline_query))
+    # No CallbackQueryHandler needed anymore
 
     # Run the bot
     application.run_polling(allowed_updates=Update.ALL_TYPES)

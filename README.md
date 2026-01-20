@@ -145,6 +145,24 @@ export LOG_FORMAT=json
 
 ---
 
+## PvP Features & Language Support
+
+### 1. Challenge via Inline Query
+Users can type `@<BotName>` in any chat to view **3 Challenge Options** (English, German, Russian).
+- **Deep Linking**: Generates a link like `https://t.me/<BotName>?start=<seed>_<lang>`.
+- **Auto-Start**: The recipient clicks "Accept" and the game opens **immediately** in the chosen language.
+
+### 2. Deterministic Gameplay
+- Games started via challenge are **seeded**. 
+- Both players receive the **exact same order of words** and refills for fair comparison.
+
+### 3. Score Sharing
+- Upon finishing, users can click "Share Score 🏆".
+- This opens the Telegram chat picker to post a score card: *"I scored X! Can you beat me?"*.
+- The card includes a "Challenge" button for friends to replay the **same seed**.
+
+---
+
 ## Getting Started
 
 1. **Clone the repository** (or create a new repo from this template).

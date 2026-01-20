@@ -27,7 +27,10 @@ class WordManager:
         self.current_words: Set[int] = set()
         self.seen_words: Set[int] = set()
         self.target_words_count = target_words_count
+        self.target_words_count = target_words_count
         self.total_score = 0
+        self.deck: List[int] = []
+        self.rng = random.Random()
         logger.info(
             f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}"
         )
@@ -38,19 +41,32 @@ class WordManager:
         logger.debug(f"Found {len(available)} available words.")
         return available
 
-    def init_game(self) -> None:
-        """Initialize the game with random words."""
-        available = self.get_available_words()
-        if not available:
+    def init_game(self, seed: str | int | None = None) -> None:
+        """Initialize the game with random words using optional seed."""
+        # Setup RNG
+        self.rng = random.Random(seed)
+
+        # Create a deterministic deck
+        # 1. Get all IDs
+        all_ids = sorted(list(self.all_words.keys()))
+        # 2. Shuffle deterministically
+        self.rng.shuffle(all_ids)
+        # 3. Store as deck
+        self.deck = all_ids
+
+        if not self.deck:
             logger.error("No words available to start the game. Please check the word list.")
             raise ValueError("No words available to start the game!")
 
-        self.current_words = set(
-            random.sample(list(available.keys()), min(self.target_words_count, len(available)))
-        )
-        self.seen_words.update(self.current_words)
+        # Draw initial words
+        num_initial = min(self.target_words_count, len(self.deck))
+        self.current_words = set(self.deck[:num_initial])
+        self.deck = self.deck[num_initial:]
+
+        self.seen_words = set(self.current_words)
+
         logger.info(
-            f"Game initialized with words: {self.get_current_words()} (IDs: {list(self.current_words)})"
+            f"Game initialized with seed={seed}, words: {self.get_current_words()} (IDs: {list(self.current_words)})"
         )
 
     def get_current_words(self) -> List[str]:
@@ -84,7 +100,16 @@ class WordManager:
 
         # Remove most similar words
         removed_ids = set()
+        # Re-apply similarity check in main.py
         for word_id, score in word_scores:
+            if score > 0.98:
+                logger.info(
+                    f"Guess too similar (score: {score}) to '{self.all_words[word_id]}'. Rejected."
+                )
+                raise ValueError(
+                    f"Word is already on screen or too similar to '{self.all_words[word_id]}'."
+                )
+
             if len(removed_ids) >= max_remove:
                 logger.debug(
                     f"Max removal limit ({max_remove}) reached. Stopping further removals."
@@ -119,34 +144,59 @@ class WordManager:
         return removed_words, new_words, round_score
 
     def _add_random_words(self) -> List[str]:
-        """Add random words to maintain target count."""
+        """Add random words from the deck to maintain target count."""
         needed = self.target_words_count - len(self.current_words)
         logger.debug(f"Need to add {needed} words.")
         if needed <= 0:
             logger.debug("No new words needed to maintain target count.")
             return []
 
-        available = self.get_available_words()
-        if not available:
-            logger.warning(
-                "No available words to add. All words have been seen or are currently in play."
-            )
+        if not self.deck:
+            logger.warning("No more words in the deck to add.")
             return []
 
-        new_ids = set(random.sample(list(available.keys()), min(needed, len(available))))
+        num_to_add = min(needed, len(self.deck))
+        new_ids = set(self.deck[:num_to_add])
+        self.deck = self.deck[num_to_add:]
+
         self.current_words.update(new_ids)
         self.seen_words.update(new_ids)
+
         added_words = [self.all_words[k] for k in new_ids]
         logger.info(
             f"Added {len(added_words)} new words: {added_words} (IDs: {list(new_ids)}) to maintain target count."
         )
         return added_words
 
+    def shuffle_active_words(self) -> Tuple[List[str], List[str]]:
+        """Shuffle current words for a cost.
+
+        Returns:
+            tuple: (removed_words, added_words)
+        
+        Raises:
+            ValueError: If not enough score.
+        """
+        COST = 200
+        if self.total_score < COST:
+            raise ValueError("Not enough score to shuffle (need 200).")
+
+        self.total_score -= COST
+        
+        # Remove all current words
+        removed_words = [self.all_words[k] for k in self.current_words]
+        self.current_words.clear()
+        
+        # Add new words
+        new_words = self._add_random_words()
+        
+        logger.info(f"Shuffled words. Spent {COST} points. Removed: {removed_words}, Added: {new_words}")
+        return removed_words, new_words
+
     def is_game_over(self) -> bool:
         """Check if all words have been seen."""
-        game_over = len(self.get_available_words()) == 0
-        logger.debug(f"Game over status: {game_over}")
-        return game_over
+        # Game is over if deck is empty AND we have cleared current deck
+        return len(self.deck) == 0 and len(self.current_words) == 0
 
 
 class GameState(BaseModel):
@@ -208,6 +258,26 @@ class WordGame:
             game_over=self.manager.is_game_over(),
         )
 
+    async def shuffle_words(self) -> GameState:
+        """Shuffle the current words."""
+        removed_words, added_words = self.manager.shuffle_active_words()
+        
+        # Recalculate similarities might be skipped here as we don't have a user word
+        # But for the GameState we usually need similarities relative to *something*.
+        # However, until the user types a word, we might just return empty similarities?
+        # Or maybe we need to keep the last user word?
+        # For now, let's return empty similarities since the context changed completely.
+        
+        return GameState(
+            current_words=self.manager.get_current_words(),
+            removed_words=removed_words,
+            added_words=added_words,
+            similarities={}, # Reset similarities as words changed
+            round_score=0,
+            total_score=self.manager.total_score,
+            game_over=self.manager.is_game_over(),
+        )
+
 
 async def main():
     """Run an example game."""
@@ -225,7 +295,7 @@ async def main():
         word_manager.init_game()
         initial_words = word_manager.get_current_words()
         logger.info(f"Game started with initial words: {initial_words}")
-        print("Starting words:", initial_words)
+        logger.debug(f"Starting words: {initial_words}")
 
         # Game loop
         while not word_manager.is_game_over():
@@ -237,19 +307,18 @@ async def main():
 
             result = await game.play_round(user_input)
 
-            print("\nYour word:", user_input)
-            print("\nSimilarities:")
+            logger.debug(f"\nYour word: {user_input}")
+            logger.debug("\nSimilarities:")
             for word, sim in result.similarities.items():
-                print(f"{word}: {sim:.3f}")
-            print("\nRemoved words:", result.removed_words)
-            print("Added words:", result.added_words)
-            print(f"Round Score: {result.round_score}")
-            print(f"Total Score: {result.total_score}")
-            print("\nCurrent words:", result.current_words)
+                logger.debug(f"{word}: {sim:.3f}")
+            logger.debug(f"\nRemoved words: {result.removed_words}")
+            logger.debug(f"Added words: {result.added_words}")
+            logger.debug(f"Round Score: {result.round_score}")
+            logger.debug(f"Total Score: {result.total_score}")
+            logger.debug(f"\nCurrent words: {result.current_words}")
 
             if result.game_over:
                 logger.info("Game Over! All available words have been seen!")
-                print("\nGame Over! All words have been seen!")
                 break
 
 

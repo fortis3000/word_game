@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Similarity Game</title>
+    <link rel="stylesheet" href="/css/style.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Content same as above -->
+        <main id="start-screen" class="screen-center">
+            <header>
+                <h1>Word Context Game</h1>
+            </header>
+
+            <div class="menu-actions column" style="margin-bottom: 2rem;">
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Select Language:</p>
+                <button class="primary-btn lang-btn" data-lang="en">English</button>
+                <button class="primary-btn lang-btn" data-lang="de">Deutsch</button>
+                <button class="primary-btn lang-btn" data-lang="ru">Русский</button>
+            </div>
+
+            <p id="instruction-text" class="hidden">Explore semantic relationships. Find words closely related to the
+                hidden context.</p>
+
+            <div class="menu-actions">
+                <button id="start-btn" class="primary-btn large-btn hidden">Start Game</button>
+            </div>
+        </main>
+
+        <main id="game-area" class="hidden">
+            <header class="game-header">
+                <h2>Word Context Game</h2>
+                <div class="header-actions">
+                    <button id="shuffle-btn" class="secondary-btn small-btn" title="Shuffle Words (Cost: 200)">🔄
+                        200</button>
+                    <button id="hint-btn" class="secondary-btn small-btn" title="Hint">💡</button>
+                    <button id="quit-btn" class="text-btn">Quit</button>
+                </div>
+            </header>
+
+            <div class="score-board">
+                <div class="score-item">
+                    <span class="label">Round Score</span>
+                    <span id="round-score" class="value">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">Total Score</span>
+                    <span id="total-score" class="value">0</span>
+                </div>
+            </div>
+
+            <div class="words-container">
+                <div class="section current-words">
+                    <h3>Current Context</h3>
+                    <div id="current-words-list" class="word-cloud">
+                        <!-- Words injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="word-input" placeholder="Type a related word..." autocomplete="off">
+                <button id="submit-btn" class="primary-btn">Submit</button>
+            </div>
+
+            <div class="feedback-area">
+                <!-- Removed list removed per user request -->
+            </div>
+        </main>
+
+        <main id="game-over-screen" class="hidden screen-center">
+            <h2>Game Over!</h2>
+            <p>You found all the words!</p>
+            <div class="final-score">
+                <span class="label">Final Score</span>
+                <span id="final-score" class="value">0</span>
+            </div>
+            <button id="restart-btn" class="primary-btn large-btn">Play Again</button>
+            <button id="share-score-btn-gameover" class="secondary-btn">Share Score 🏆</button>
+            <button id="back-to-menu-btn" class="secondary-btn">Main Menu</button>
+        </main>
+
+        <main id="summary-screen" class="hidden screen-center">
+            <h2>Session Ended</h2>
+            <p>Good effort! Here is how you did:</p>
+            <div class="final-score">
+                <span class="label">Total Score</span>
+                <span id="summary-score" class="value">0</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="label">Words Found</span>
+                    <span id="summary-words-found" class="value-small">0</span>
+                </div>
+            </div>
+            <div class="menu-actions">
+                <button id="summary-back-btn" class="primary-btn">Back to Menu</button>
+                <button id="share-score-btn-summary" class="secondary-btn">Share Score 🏆</button>
+            </div>
+        </main>
+
+        <div id="toast-container"></div>
+    </div>
+    <script src="/js/app.js?v=5"></script>
+</body>
+
+</html>

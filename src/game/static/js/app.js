@@ -30,6 +30,7 @@ const totalScoreEl = document.getElementById('total-score');
 const finalScoreEl = document.getElementById('final-score');
 const toastContainer = document.getElementById('toast-container');
 const instructionText = document.getElementById('instruction-text');
+const contextHeader = document.getElementById('context-header');
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
@@ -91,6 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto-click start logic
         instructionText.textContent = getInstructionText(selectedLang);
         startBtn.textContent = getStartBtnText(selectedLang);
+        wordInput.placeholder = getInputPlaceholder(selectedLang);
+        submitBtn.textContent = getSubmitBtnText(selectedLang);
+        if (contextHeader) contextHeader.textContent = getContextHeader(selectedLang);
 
         // Immediate start
         startGame();
@@ -121,9 +125,36 @@ function getStartBtnText(lang) {
 
 function getInstructionText(lang) {
     const texts = {
-        'en': "Explore semantic relationships. Find words closely related to the hidden context.",
-        'de': "Erforsche semantische Zusammenhänge. Finde Wörter, die dem versteckten Kontext nahe stehen.",
-        'ru': "Исследуйте смысловые связи. Найдите слова, близкие к скрытому контексту."
+        'en': "• Target a word with its synonym to get the maximum score.",
+        'de': "• Nutze Synonyme zu den gezeigten Wörtern, um die maximale Punktzahl zu erreichen.",
+        'ru': "• Используйте синонимы к словам, чтобы набрать максимум очков."
+    };
+    return texts[lang] || texts['en'];
+}
+
+function getInputPlaceholder(lang) {
+    const texts = {
+        'en': "Type a word close to one or several on the screen...",
+        'de': "Tippe ein Wort ein, das einem oder mehreren auf dem Schirm ähnelt...",
+        'ru': "Введите слово, близкое к одному или нескольким на экране..."
+    };
+    return texts[lang] || texts['en'];
+}
+
+function getSubmitBtnText(lang) {
+    const texts = {
+        'en': "Submit",
+        'de': "Senden",
+        'ru': "Отправить"
+    };
+    return texts[lang] || texts['en'];
+}
+
+function getContextHeader(lang) {
+    const texts = {
+        'en': "Current Context",
+        'de': "Aktueller Kontext",
+        'ru': "Текущий контекст"
     };
     return texts[lang] || texts['en'];
 }
@@ -170,20 +201,13 @@ function selectLanguage(lang, btn) {
     instructionText.classList.remove('hidden');
 
     // Update instructions based on language
-    const texts = {
-        'en': "Explore semantic relationships. Find words closely related to the hidden context.",
-        'de': "Erforsche semantische Zusammenhänge. Finde Wörter, die dem versteckten Kontext nahe stehen.",
-        'ru': "Исследуйте смысловые связи. Найдите слова, близкие к скрытому контексту."
-    };
-    instructionText.textContent = texts[selectedLang] || texts['en'];
+    instructionText.textContent = getInstructionText(selectedLang);
+    wordInput.placeholder = getInputPlaceholder(selectedLang);
+    submitBtn.textContent = getSubmitBtnText(selectedLang);
+    if (contextHeader) contextHeader.textContent = getContextHeader(selectedLang);
 
     // Update button text
-    const btnTexts = {
-        'en': "Start Game",
-        'de': "Spiel Starten",
-        'ru': "Начать игру"
-    };
-    startBtn.textContent = btnTexts[selectedLang] || btnTexts['en'];
+    startBtn.textContent = getStartBtnText(selectedLang);
 }
 
 function showMainMenu() {

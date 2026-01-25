@@ -120,6 +120,7 @@ async def start_game(lang: str = "en", seed: str | None = None):
             round_score=0,
             total_score=0,
             lives=word_manager.lives,
+            time_remaining=word_manager.get_time_remaining(),
             game_over=False,
         ),
     )

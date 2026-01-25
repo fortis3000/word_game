@@ -29,13 +29,18 @@ const livesContainer = document.getElementById('lives-container');
 const roundScoreEl = document.getElementById('round-score');
 const totalScoreEl = document.getElementById('total-score');
 const finalScoreEl = document.getElementById('final-score');
+let timeRemainingEl = document.getElementById('time-remaining');
 const toastContainer = document.getElementById('toast-container');
 const instructionText = document.getElementById('instruction-text');
 const contextHeader = document.getElementById('context-header');
 
+let timerInterval = null;
+let currentTimeRemaining = 0;
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App initialized");
+    timeRemainingEl = document.getElementById('time-remaining');
     const langBtns = document.querySelectorAll('.lang-btn');
     console.log("Found lang buttons:", langBtns.length);
 
@@ -212,6 +217,7 @@ function selectLanguage(lang, btn) {
 }
 
 function showMainMenu() {
+    stopTimer();
     startScreen.classList.remove('hidden');
     gameArea.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
@@ -324,6 +330,7 @@ async function startGame() {
 }
 
 async function quitGame() {
+    stopTimer();
     if (!sessionId) {
         showMainMenu();
         return;
@@ -456,6 +463,12 @@ function updateUI(state) {
     roundScoreEl.textContent = state.round_score > 0 ? `+${state.round_score}` : state.round_score;
     totalScoreEl.textContent = state.total_score;
     
+    if (state.time_remaining !== undefined) {
+        currentTimeRemaining = Math.floor(state.time_remaining);
+        if (timeRemainingEl) timeRemainingEl.textContent = formatTime(currentTimeRemaining);
+        startTimer();
+    }
+    
     if (livesContainer) {
         livesContainer.innerHTML = '';
         const currentLives = state.lives !== undefined ? state.lives : 5;
@@ -471,6 +484,7 @@ function updateUI(state) {
 }
 
 function handleGameOver(state) {
+    stopTimer();
     gameArea.classList.add('hidden');
     gameOverScreen.classList.remove('hidden');
     finalScoreEl.textContent = state.total_score;
@@ -481,8 +495,38 @@ function handleGameOver(state) {
     if (state.lives <= 0) {
         if (gameOverTitle) gameOverTitle.textContent = "Game Over!";
         if (gameOverMsg) gameOverMsg.textContent = "You ran out of lives!";
+    } else if (state.time_remaining !== undefined && state.time_remaining <= 0) {
+        if (gameOverTitle) gameOverTitle.textContent = "Time's Up!";
+        if (gameOverMsg) gameOverMsg.textContent = `You scored ${state.total_score} points!`;
     } else {
         if (gameOverTitle) gameOverTitle.textContent = "You Won!";
         if (gameOverMsg) gameOverMsg.textContent = "You found all the words!";
+    }
+}
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        currentTimeRemaining -= 1;
+        if (currentTimeRemaining <= 0) {
+            currentTimeRemaining = 0;
+            clearInterval(timerInterval);
+            if (timeRemainingEl) timeRemainingEl.textContent = "0:00";
+        } else {
+            if (timeRemainingEl) timeRemainingEl.textContent = formatTime(currentTimeRemaining);
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
     }
 }

@@ -485,3 +485,16 @@ input[type="text"]:focus {
         opacity: 0;
     }
 }
+
+.game-over-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.game-over-actions button {
+    width: 100%;
+}

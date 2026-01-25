@@ -2,6 +2,7 @@
 
 import asyncio
 import random
+import time
 from typing import Dict, List, Set, Tuple
 
 from pydantic import BaseModel
@@ -15,6 +16,9 @@ logger = get_logger(__name__)
 
 class WordManager:
     """Manages the game state and word selection."""
+
+    GAME_DURATION = 180  # 3 minutes in seconds
+    BONUS_TIME = 2  # Seconds added per correct guess
 
     def __init__(
         self, all_words: Dict[int, str], target_words_count: int = 5, initial_lives: int = 5
@@ -34,6 +38,11 @@ class WordManager:
         self.lives = initial_lives
         self.deck: List[int] = []
         self.rng = random.Random()
+
+        # Time management
+        self.start_time: float | None = None
+        self.bonus_time: float = 0
+
         logger.info(
             f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}, lives: {initial_lives}"
         )
@@ -68,6 +77,10 @@ class WordManager:
 
         self.seen_words = set(self.current_words)
 
+        # Start timer
+        self.start_time = time.time()
+        self.bonus_time = 0
+
         logger.info(
             f"Game initialized with seed={seed}, words: {self.get_current_words()} (IDs: {list(self.current_words)})"
         )
@@ -77,6 +90,15 @@ class WordManager:
         words = [self.all_words[k] for k in self.current_words]
         logger.debug(f"Current words in play: {words}")
         return words
+
+    def get_time_remaining(self) -> float:
+        """Calculate remaining time in seconds."""
+        if self.start_time is None:
+            return self.GAME_DURATION
+
+        elapsed = time.time() - self.start_time
+        remaining = self.GAME_DURATION + self.bonus_time - elapsed
+        return max(0.0, remaining)
 
     def process_guess(
         self, similarities: List[float], threshold: float = 0.5, max_remove: int = 3
@@ -91,6 +113,10 @@ class WordManager:
         Returns:
             tuple: (removed_words, added_words, round_score)
         """
+        if self.get_time_remaining() <= 0:
+            logger.info("Time is up! Cannot process guess.")
+            return [], [], 0
+
         logger.debug(
             f"Processing guess with similarities: {similarities}, threshold: {threshold}, max_remove: {max_remove}"
         )
@@ -129,10 +155,17 @@ class WordManager:
         # Update current words
         self.current_words -= removed_ids
 
-        # Update lives if no words removed
+        # Update lives and bonus time
         if not removed_ids:
             self.lives -= 1
             logger.info(f"No words removed. Lives remaining: {self.lives}")
+        else:
+            # Add bonus time for correct guess (once per successful round, or per word?)
+            # User requirement: "Every correctly guessed word gives +2 more seconds"
+            # So if removed_ids has 2 words, +4 seconds.
+            bonus = len(removed_ids) * self.BONUS_TIME
+            self.bonus_time += bonus
+            logger.info(f"Added {bonus}s bonus time. Total bonus: {self.bonus_time}")
 
         # Calculate score
         round_score = 0
@@ -207,6 +240,12 @@ class WordManager:
         """Check if game is over (all words seen or no lives left)."""
         if self.lives <= 0:
             return True
+
+        # Check time
+        if self.get_time_remaining() <= 0:
+            logger.info("Game Over! Time is up.")
+            return True
+
         # Game is over if deck is empty AND we have cleared current deck
         return len(self.deck) == 0 and len(self.current_words) == 0
 
@@ -221,6 +260,7 @@ class GameState(BaseModel):
     round_score: int
     total_score: int
     lives: int
+    time_remaining: float
     game_over: bool
 
 
@@ -269,6 +309,7 @@ class WordGame:
             round_score=round_score,
             total_score=self.manager.total_score,
             lives=self.manager.lives,
+            time_remaining=self.manager.get_time_remaining(),
             game_over=self.manager.is_game_over(),
         )
 
@@ -290,6 +331,7 @@ class WordGame:
             round_score=0,
             total_score=self.manager.total_score,
             lives=self.manager.lives,
+            time_remaining=self.manager.get_time_remaining(),
             game_over=self.manager.is_game_over(),
         )
 

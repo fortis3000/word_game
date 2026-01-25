@@ -16,23 +16,26 @@ logger = get_logger(__name__)
 class WordManager:
     """Manages the game state and word selection."""
 
-    def __init__(self, all_words: Dict[int, str], target_words_count: int = 5):
+    def __init__(
+        self, all_words: Dict[int, str], target_words_count: int = 5, initial_lives: int = 5
+    ):
         """Initialize the game manager.
 
         Args:
             all_words: Dictionary of {id: word} pairs to play with
             target_words_count: Number of words to maintain in the current set
+            initial_lives: Number of lives to start with
         """
         self.all_words = all_words
         self.current_words: Set[int] = set()
         self.seen_words: Set[int] = set()
         self.target_words_count = target_words_count
-        self.target_words_count = target_words_count
         self.total_score = 0
+        self.lives = initial_lives
         self.deck: List[int] = []
         self.rng = random.Random()
         logger.info(
-            f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}"
+            f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}, lives: {initial_lives}"
         )
 
     def get_available_words(self) -> Dict[int, str]:
@@ -126,6 +129,11 @@ class WordManager:
         # Update current words
         self.current_words -= removed_ids
 
+        # Update lives if no words removed
+        if not removed_ids:
+            self.lives -= 1
+            logger.info(f"No words removed. Lives remaining: {self.lives}")
+
         # Calculate score
         round_score = 0
         for word_id, score in word_scores:
@@ -173,7 +181,7 @@ class WordManager:
 
         Returns:
             tuple: (removed_words, added_words)
-        
+
         Raises:
             ValueError: If not enough score.
         """
@@ -182,19 +190,23 @@ class WordManager:
             raise ValueError("Not enough score to shuffle (need 200).")
 
         self.total_score -= COST
-        
+
         # Remove all current words
         removed_words = [self.all_words[k] for k in self.current_words]
         self.current_words.clear()
-        
+
         # Add new words
         new_words = self._add_random_words()
-        
-        logger.info(f"Shuffled words. Spent {COST} points. Removed: {removed_words}, Added: {new_words}")
+
+        logger.info(
+            f"Shuffled words. Spent {COST} points. Removed: {removed_words}, Added: {new_words}"
+        )
         return removed_words, new_words
 
     def is_game_over(self) -> bool:
-        """Check if all words have been seen."""
+        """Check if game is over (all words seen or no lives left)."""
+        if self.lives <= 0:
+            return True
         # Game is over if deck is empty AND we have cleared current deck
         return len(self.deck) == 0 and len(self.current_words) == 0
 
@@ -208,6 +220,7 @@ class GameState(BaseModel):
     similarities: Dict[str, float]
     round_score: int
     total_score: int
+    lives: int
     game_over: bool
 
 
@@ -255,26 +268,28 @@ class WordGame:
             similarities=dict(zip(current_words, similarities)),
             round_score=round_score,
             total_score=self.manager.total_score,
+            lives=self.manager.lives,
             game_over=self.manager.is_game_over(),
         )
 
     async def shuffle_words(self) -> GameState:
         """Shuffle the current words."""
         removed_words, added_words = self.manager.shuffle_active_words()
-        
+
         # Recalculate similarities might be skipped here as we don't have a user word
         # But for the GameState we usually need similarities relative to *something*.
         # However, until the user types a word, we might just return empty similarities?
         # Or maybe we need to keep the last user word?
         # For now, let's return empty similarities since the context changed completely.
-        
+
         return GameState(
             current_words=self.manager.get_current_words(),
             removed_words=removed_words,
             added_words=added_words,
-            similarities={}, # Reset similarities as words changed
+            similarities={},  # Reset similarities as words changed
             round_score=0,
             total_score=self.manager.total_score,
+            lives=self.manager.lives,
             game_over=self.manager.is_game_over(),
         )
 

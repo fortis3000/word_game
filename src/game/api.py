@@ -119,6 +119,7 @@ async def start_game(lang: str = "en", seed: str | None = None):
             similarities={},
             round_score=0,
             total_score=0,
+            lives=word_manager.lives,
             game_over=False,
         ),
     )

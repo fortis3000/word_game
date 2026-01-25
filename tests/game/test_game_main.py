@@ -80,6 +80,7 @@ def test_word_manager_init(sample_words):
     assert manager.all_words == sample_words
     assert manager.target_words_count == TEST_TARGET_WORDS_COUNT
     assert manager.total_score == 0
+    assert manager.lives == 5
     assert not manager.current_words
     assert not manager.seen_words
 
@@ -242,6 +243,7 @@ def test_word_manager_process_guess_below_threshold(sample_words):
     assert manager.current_words == original_words
     assert round_score == 0
     assert manager.total_score == 0
+    assert manager.lives == 4
 
 
 def test_word_manager_add_random_words(sample_words):
@@ -300,6 +302,27 @@ def test_word_manager_is_game_over(sample_words):
     assert not manager.is_game_over()
 
 
+def test_word_manager_is_game_over_lives(sample_words):
+    manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
+    manager.init_game(seed=42)
+    assert not manager.is_game_over()
+    manager.lives = 0
+    assert manager.is_game_over()
+
+
+def test_word_manager_process_guess_success_lives_unchanged(sample_words):
+    manager = WordManager(sample_words, target_words_count=TEST_TARGET_WORDS_COUNT)
+    manager.init_game(seed=42)
+    manager.current_words = {TEST_WORD_ID_0}  # apple
+
+    similarities = [TEST_SIMILARITY_HIGH]  # 0.9 > 0.6
+
+    initial_lives = manager.lives
+    manager.process_guess(similarities, threshold=0.6)
+
+    assert manager.lives == initial_lives
+
+
 # --- Tests for WordGame class ---
 @pytest.fixture
 def mock_embedding_client():
@@ -319,6 +342,7 @@ def mock_word_manager(sample_words):
     manager.get_current_words.return_value = ["apple", "banana", "orange"]
     manager.process_guess.return_value = (["apple"], ["grape"], 90)
     manager.total_score = 90
+    manager.lives = 5
     manager.is_game_over.return_value = False
     return manager
 

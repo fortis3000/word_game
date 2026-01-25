@@ -1,6 +1,7 @@
 import unittest
 from src.game.main import WordManager
 
+
 class TestShuffle(unittest.TestCase):
     def setUp(self):
         # minimal mock words
@@ -17,18 +18,19 @@ class TestShuffle(unittest.TestCase):
     def test_shuffle_success(self):
         self.manager.total_score = 300
         initial_words = self.manager.get_current_words()
-        
+
         self.manager.shuffle_active_words()
-        
+
         # Check score deduction
         self.assertEqual(self.manager.total_score, 100)
-        
+
         # Check words changed
         new_words = self.manager.get_current_words()
         self.assertNotEqual(set(initial_words), set(new_words))
-        
+
         # Check still has target count
         self.assertEqual(len(new_words), 5)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

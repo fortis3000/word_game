@@ -71,6 +71,7 @@ def test_play_round_success(mock_game_cls, mock_gm_cls, client):
         similarities={"apple": 0.9},
         round_score=90,
         total_score=90,
+        lives=5,
         game_over=False,
     )
 

@@ -128,6 +128,25 @@ header p {
     color: var(--text-main);
 }
 
+/* Hearts for lives */
+.lives-hearts {
+    display: flex;
+    gap: 0.25rem;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.lives-hearts .heart {
+    color: var(--secondary); /* Default grey for lost lives */
+    transition: color 0.3s ease;
+    cursor: default;
+}
+
+.lives-hearts .heart.active {
+    color: var(--accent); /* Red for active lives */
+    text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+}
+
 .current-words {
     margin-bottom: 2rem;
     text-align: center;

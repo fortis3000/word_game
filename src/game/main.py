@@ -10,8 +10,6 @@ from pydantic import BaseModel
 from src.shared.embedding_client import EmbeddingClient
 from src.utils.logger import get_logger
 from src.data.loader import load_words, load_config
-from src.models.language_detector import detect_language
-from src.game.exceptions import InvalidLanguageError
 
 logger = get_logger(__name__)
 
@@ -274,15 +272,11 @@ class WordGame:
         word_manager: WordManager,
         embedding_client: EmbeddingClient,
         similarity_threshold: float = 0.6,
-        language: str = "en",
     ):
         self.manager = word_manager
         self.embedding_client = embedding_client
         self.threshold = similarity_threshold
-        self.language = language
-        logger.info(
-            f"WordGame initialized with similarity threshold: {similarity_threshold} for language: {language}"
-        )
+        logger.info(f"WordGame initialized with similarity threshold: {similarity_threshold}")
 
     async def calculate_similarities(self, user_word: str, target_words: List[str]) -> List[float]:
         """Calculate similarities between user's word and target words."""
@@ -295,12 +289,6 @@ class WordGame:
 
     async def play_round(self, user_word: str) -> GameState:
         """Play one round of the game."""
-        detected_lang = detect_language(user_word)
-        if detected_lang and detected_lang != self.language:
-            raise InvalidLanguageError(
-                f"Invalid language. Expected {self.language.upper()}, but got {detected_lang.upper()}."
-            )
-
         logger.info(f"Starting game round with user word: '{user_word}'")
         current_words = self.manager.get_current_words()
         logger.debug(f"Current words in play for similarity calculation: {current_words}")

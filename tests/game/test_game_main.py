@@ -1,10 +1,11 @@
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.game.main import GameState, WordGame, WordManager, load_words
 from src.shared.embedding_client import EmbeddingClient
+from src.game.exceptions import InvalidLanguageError
 
 # Constants for testing
 TEST_TARGET_WORDS_COUNT = 5
@@ -352,10 +353,12 @@ def test_word_game_init(mock_word_manager, mock_embedding_client):
         mock_word_manager,
         mock_embedding_client,
         similarity_threshold=TEST_SIMILARITY_THRESHOLD,
+        language="en",
     )
     assert game.manager == mock_word_manager
     assert game.embedding_client == mock_embedding_client
     assert game.threshold == TEST_SIMILARITY_THRESHOLD
+    assert game.language == "en"
 
 
 @pytest.mark.asyncio
@@ -376,11 +379,15 @@ async def test_word_game_calculate_similarities(mock_embedding_client):
 
 
 @pytest.mark.asyncio
-async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
+@patch("src.game.main.detect_language", return_value="en")
+async def test_word_game_play_round(
+    mock_detect_language, mock_word_manager, mock_embedding_client
+):
     game = WordGame(
         mock_word_manager,
         mock_embedding_client,
         similarity_threshold=TEST_SIMILARITY_THRESHOLD,
+        language="en",
     )
     user_word = "test_word"
 
@@ -425,11 +432,15 @@ async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
 
 
 @pytest.mark.asyncio
-async def test_word_game_play_round_game_over(mock_word_manager, mock_embedding_client):
+@patch("src.game.main.detect_language", return_value="en")
+async def test_word_game_play_round_game_over(
+    mock_detect_language, mock_word_manager, mock_embedding_client
+):
     game = WordGame(
         mock_word_manager,
         mock_embedding_client,
         similarity_threshold=TEST_SIMILARITY_THRESHOLD,
+        language="en",
     )
     user_word = "test_word"
 
@@ -448,3 +459,36 @@ async def test_word_game_play_round_game_over(mock_word_manager, mock_embedding_
 
     game_state = await game.play_round(user_word)
     assert game_state.game_over
+
+
+@pytest.mark.asyncio
+@patch("src.game.main.detect_language")
+async def test_word_game_play_round_wrong_language(
+    mock_detect_language, mock_word_manager, mock_embedding_client
+):
+    """Test that play_round raises InvalidLanguageError for wrong language."""
+    mock_detect_language.return_value = "de"
+    game = WordGame(
+        mock_word_manager, mock_embedding_client, language="en"
+    )
+
+    with pytest.raises(
+        InvalidLanguageError, match="Invalid language. Expected EN, but got DE."
+    ):
+        await game.play_round("apfel")
+
+
+@pytest.mark.asyncio
+@patch("src.game.main.detect_language")
+async def test_word_game_play_round_correct_language(
+    mock_detect_language, mock_word_manager, mock_embedding_client
+):
+    """Test that play_round proceeds with correct language."""
+    mock_detect_language.return_value = "en"
+    game = WordGame(
+        mock_word_manager, mock_embedding_client, language="en"
+    )
+
+    # This should not raise an exception
+    await game.play_round("apple")
+    mock_word_manager.process_guess.assert_called_once()

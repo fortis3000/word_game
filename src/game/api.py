@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from src.game.main import WordGame, WordManager, GameState
 from src.shared.embedding_client import EmbeddingClient
 from src.data.loader import load_words, load_config
-from src.game.exceptions import InvalidLanguageError
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -107,7 +106,7 @@ async def start_game(lang: str = "en", seed: str | None = None):
 
     session_id, word_manager = await manager.create_game(lang=lang, seed=seed)
 
-    game = WordGame(word_manager, client, language=lang)
+    game = WordGame(word_manager, client)
 
     manager.games[session_id] = game
 
@@ -138,9 +137,6 @@ async def play_round(session_id: str, request: PlayRequest):
     try:
         game_state = await game.play_round(request.word)
         return game_state
-    except InvalidLanguageError as e:
-        logger.warning(f"Invalid language detected: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
     except ValueError as e:
         logger.warning(f"Invalid move: {e}")
         raise HTTPException(status_code=400, detail=str(e))

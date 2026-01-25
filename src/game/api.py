@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.game.main import WordGame, WordManager, GameState
+from src.game.exceptions import InvalidLanguageError
 from src.shared.embedding_client import EmbeddingClient
 from src.data.loader import load_words, load_config
 from src.utils.logger import get_logger
@@ -52,7 +53,7 @@ class GameManager:
 
     async def create_game(
         self, lang: str = "en", seed: str | None = None
-    ) -> tuple[str, WordManager]:
+    ) -> tuple[str, WordManager, str]:
         session_id = str(uuid.uuid4())
 
         word_dict = self.words.get(lang)
@@ -64,7 +65,7 @@ class GameManager:
         word_manager = WordManager(word_dict, target_words_count=5)
         # Pass seed to init_game. If seed is None, it uses random.
         word_manager.init_game(seed=seed)
-        return session_id, word_manager
+        return session_id, word_manager, lang
 
 
 # Application Lifespan
@@ -104,9 +105,9 @@ async def start_game(lang: str = "en", seed: str | None = None):
     manager: GameManager = app.state.game_manager
     client: EmbeddingClient = app.state.embedding_client
 
-    session_id, word_manager = await manager.create_game(lang=lang, seed=seed)
+    session_id, word_manager, resolved_lang = await manager.create_game(lang=lang, seed=seed)
 
-    game = WordGame(word_manager, client)
+    game = WordGame(word_manager, client, language=resolved_lang)
 
     manager.games[session_id] = game
 
@@ -137,6 +138,9 @@ async def play_round(session_id: str, request: PlayRequest):
     try:
         game_state = await game.play_round(request.word)
         return game_state
+    except InvalidLanguageError as e:
+        logger.warning(f"Language error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except ValueError as e:
         logger.warning(f"Invalid move: {e}")
         raise HTTPException(status_code=400, detail=str(e))

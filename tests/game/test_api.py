@@ -39,7 +39,7 @@ def test_start_game(mock_emb_cls, mock_gm_cls, client):
     # Setup create_game to return a dummy session and manager
     mock_word_manager = MagicMock()
     mock_word_manager.get_current_words.return_value = ["apple", "banana"]
-    mock_gm.create_game = AsyncMock(return_value=("sess_123", mock_word_manager))
+    mock_gm.create_game = AsyncMock(return_value=("sess_123", mock_word_manager, "en"))
 
     response = client.post("/api/game/start")
 

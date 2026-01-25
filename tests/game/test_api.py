@@ -39,6 +39,7 @@ def test_start_game(mock_emb_cls, mock_gm_cls, client):
     # Setup create_game to return a dummy session and manager
     mock_word_manager = MagicMock()
     mock_word_manager.get_current_words.return_value = ["apple", "banana"]
+    mock_word_manager.get_time_remaining.return_value = 180.0
     mock_gm.create_game = AsyncMock(return_value=("sess_123", mock_word_manager))
 
     response = client.post("/api/game/start")
@@ -72,6 +73,7 @@ def test_play_round_success(mock_game_cls, mock_gm_cls, client):
         round_score=90,
         total_score=90,
         lives=5,
+        time_remaining=180.0,
         game_over=False,
     )
 

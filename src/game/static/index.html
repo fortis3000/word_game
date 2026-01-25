@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Similarity Game</title>
-    <link rel="stylesheet" href="/css/style.css?v=3">
+    <link rel="stylesheet" href="/css/style.css?v=4">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -50,6 +50,10 @@
                     <div id="lives-container" class="lives-hearts"></div>
                 </div>
                 <div class="score-item">
+                    <span class="label">Time</span>
+                    <span id="time-remaining" class="value">3:00</span>
+                </div>
+                <div class="score-item">
                     <span class="label">Previous round score</span>
                     <span id="round-score" class="value">0</span>
                 </div>
@@ -86,9 +90,11 @@
                 <span class="label">Final Score</span>
                 <span id="final-score" class="value">0</span>
             </div>
-            <button id="restart-btn" class="primary-btn large-btn">Play Again</button>
-            <button id="share-score-btn-gameover" class="secondary-btn">Share Score 🏆</button>
-            <button id="back-to-menu-btn" class="secondary-btn">Main Menu</button>
+            <div class="game-over-actions">
+                <button id="restart-btn" class="primary-btn large-btn">Play Again</button>
+                <button id="share-score-btn-gameover" class="secondary-btn">Share Score 🏆</button>
+                <button id="back-to-menu-btn" class="secondary-btn">Main Menu</button>
+            </div>
         </main>
 
         <main id="summary-screen" class="hidden screen-center">
@@ -112,7 +118,7 @@
 
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js?v=6"></script>
+    <script src="/js/app.js?v=8"></script>
 </body>
 
 </html>

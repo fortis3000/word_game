@@ -72,6 +72,7 @@ def test_play_round_success(mock_game_cls, mock_gm_cls, client):
         round_score=90,
         total_score=90,
         lives=5,
+        time_remaining=180.0,
         game_over=False,
     )
 

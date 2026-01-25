@@ -11,6 +11,8 @@ from src.utils.logger import get_logger
 from src.data.loader import load_words, load_config
 from src.models.language_detector import detect_language
 from src.game.exceptions import InvalidLanguageError
+from src.models.language_detector import detect_language
+from src.game.exceptions import InvalidLanguageError
 
 logger = get_logger(__name__)
 

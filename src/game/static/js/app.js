@@ -25,6 +25,7 @@ const langBtns = document.querySelectorAll('.lang-btn');
 
 // UI Elements
 const currentWordsList = document.getElementById('current-words-list');
+const livesContainer = document.getElementById('lives-container');
 const roundScoreEl = document.getElementById('round-score');
 const totalScoreEl = document.getElementById('total-score');
 const finalScoreEl = document.getElementById('final-score');
@@ -452,12 +453,36 @@ function updateUI(state) {
         currentWordsList.appendChild(li);
     });
 
-    roundScoreEl.textContent = state.round_score;
+    roundScoreEl.textContent = state.round_score > 0 ? `+${state.round_score}` : state.round_score;
     totalScoreEl.textContent = state.total_score;
+    
+    if (livesContainer) {
+        livesContainer.innerHTML = '';
+        const currentLives = state.lives !== undefined ? state.lives : 5;
+        const totalLives = 5; // Assuming 5 is max lives
+        
+        for (let i = 0; i < totalLives; i++) {
+            const heart = document.createElement('span');
+            heart.className = `heart ${i < currentLives ? 'active' : ''}`;
+            heart.textContent = '♥';
+            livesContainer.appendChild(heart);
+        }
+    }
 }
 
 function handleGameOver(state) {
     gameArea.classList.add('hidden');
     gameOverScreen.classList.remove('hidden');
     finalScoreEl.textContent = state.total_score;
+    
+    const gameOverTitle = gameOverScreen.querySelector('h2');
+    const gameOverMsg = gameOverScreen.querySelector('p');
+    
+    if (state.lives <= 0) {
+        if (gameOverTitle) gameOverTitle.textContent = "Game Over!";
+        if (gameOverMsg) gameOverMsg.textContent = "You ran out of lives!";
+    } else {
+        if (gameOverTitle) gameOverTitle.textContent = "You Won!";
+        if (gameOverMsg) gameOverMsg.textContent = "You found all the words!";
+    }
 }

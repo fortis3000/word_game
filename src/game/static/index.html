@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Similarity Game</title>
-    <link rel="stylesheet" href="/css/style.css?v=2">
+    <link rel="stylesheet" href="/css/style.css?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -46,7 +46,11 @@
 
             <div class="score-board">
                 <div class="score-item">
-                    <span class="label">Round Score</span>
+                    <span class="label">Lives</span>
+                    <div id="lives-container" class="lives-hearts"></div>
+                </div>
+                <div class="score-item">
+                    <span class="label">Previous round score</span>
                     <span id="round-score" class="value">0</span>
                 </div>
                 <div class="score-item">
@@ -108,7 +112,7 @@
 
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js?v=5"></script>
+    <script src="/js/app.js?v=6"></script>
 </body>
 
 </html>

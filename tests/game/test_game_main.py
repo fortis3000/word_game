@@ -1,9 +1,8 @@
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.game.exceptions import InvalidLanguageError
 from src.game.main import GameState, WordGame, WordManager, load_words
 from src.shared.embedding_client import EmbeddingClient
 
@@ -376,10 +375,8 @@ async def test_word_game_calculate_similarities(mock_embedding_client):
     mock_embedding_client.get_similarities.assert_called_once_with(user_word, target_words)
 
 
-@patch("src.game.main.detect_language")
 @pytest.mark.asyncio
-async def test_word_game_play_round(mock_detect, mock_word_manager, mock_embedding_client):
-    mock_detect.return_value = "en"
+async def test_word_game_play_round(mock_word_manager, mock_embedding_client):
     game = WordGame(
         mock_word_manager,
         mock_embedding_client,
@@ -427,12 +424,8 @@ async def test_word_game_play_round(mock_detect, mock_word_manager, mock_embeddi
     assert not game_state.game_over
 
 
-@patch("src.game.main.detect_language")
 @pytest.mark.asyncio
-async def test_word_game_play_round_game_over(
-    mock_detect, mock_word_manager, mock_embedding_client
-):
-    mock_detect.return_value = "en"
+async def test_word_game_play_round_game_over(mock_word_manager, mock_embedding_client):
     game = WordGame(
         mock_word_manager,
         mock_embedding_client,
@@ -455,56 +448,3 @@ async def test_word_game_play_round_game_over(
 
     game_state = await game.play_round(user_word)
     assert game_state.game_over
-
-
-@patch("src.game.main.detect_language")
-@pytest.mark.asyncio
-async def test_word_game_play_round_invalid_language(
-    mock_detect, mock_word_manager, mock_embedding_client
-):
-    game = WordGame(mock_word_manager, mock_embedding_client, language="en")
-    mock_detect.return_value = "de"  # Detected German
-
-    with pytest.raises(InvalidLanguageError, match="Expected EN, but got DE"):
-        await game.play_round("Hallo")
-
-    # Ensure no calls to embedding or manager
-    mock_embedding_client.get_similarities.assert_not_called()
-    mock_word_manager.process_guess.assert_not_called()
-
-
-@patch("src.game.main.detect_language")
-@pytest.mark.asyncio
-async def test_word_game_play_round_valid_language(
-    mock_detect, mock_word_manager, mock_embedding_client
-):
-    game = WordGame(mock_word_manager, mock_embedding_client, language="en")
-    mock_detect.return_value = "en"
-    # Setup necessary mocks for success path
-    mock_word_manager.get_current_words.return_value = ["apple"]
-    mock_embedding_client.get_similarities.return_value = [0.1]
-    mock_word_manager.process_guess.return_value = ([], [], 0)
-    mock_word_manager.is_game_over.return_value = False
-
-    await game.play_round("Hello")
-
-    mock_embedding_client.get_similarities.assert_called()
-
-
-@patch("src.game.main.detect_language")
-@pytest.mark.asyncio
-async def test_word_game_play_round_unknown_language(
-    mock_detect, mock_word_manager, mock_embedding_client
-):
-    # If detection fails (returns None), we should allow it
-    game = WordGame(mock_word_manager, mock_embedding_client, language="en")
-    mock_detect.return_value = None
-
-    mock_word_manager.get_current_words.return_value = ["apple"]
-    mock_embedding_client.get_similarities.return_value = [0.1]
-    mock_word_manager.process_guess.return_value = ([], [], 0)
-    mock_word_manager.is_game_over.return_value = False
-
-    await game.play_round("Hmmmm")
-
-    mock_embedding_client.get_similarities.assert_called()

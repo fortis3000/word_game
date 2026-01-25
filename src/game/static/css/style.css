@@ -25,7 +25,8 @@ body {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Changed from center to prevent clipping */
+    padding: 1rem; /* Padding for mobile edges */
 }
 
 .container {
@@ -33,6 +34,8 @@ body {
     max-width: 800px;
     padding: 2rem;
     background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+    margin: auto; /* Vertically center if space allows */
+    border-radius: 1rem; /* Ensure radius is consistent */
 }
 
 header {
@@ -298,7 +301,6 @@ input[type="text"]:focus {
     background: rgba(30, 41, 59, 0.6);
     padding: 0.75rem 1.5rem;
     border-radius: 9999px;
-    /* Rounded pill / button style */
     font-size: 1.1rem;
     color: var(--text-secondary);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -309,10 +311,6 @@ input[type="text"]:focus {
 }
 
 .word-item.removed {
-    /* No special highlight for removed words in the main list if they appeared there, 
-       but for the 'Removed' list we can keep semblance or just basic text. 
-       User said 'Do not highlight eliminated words', assuming they meant 'don't make them pop'.
-       We'll keep them subtle. */
     background: transparent;
     border: 1px solid rgba(220, 38, 38, 0.1);
     color: #fca5a5;
@@ -320,14 +318,10 @@ input[type="text"]:focus {
 }
 
 .word-item.new-word {
-    /* Blue light highlight */
     background: rgba(59, 130, 246, 0.15);
-    /* Blue-500 equivalent alpha */
     border: 1px solid rgba(59, 130, 246, 0.5);
     color: #93c5fd;
-    /* Light blue text */
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
-    /* animation: bluePulse 2s infinite; REMOVED per user request */
 }
 
 .secondary-btn {
@@ -497,4 +491,64 @@ input[type="text"]:focus {
 
 .game-over-actions button {
     width: 100%;
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+        /* reduce side padding on mobile */
+    }
+
+    header h1 {
+        font-size: 2rem; /* Smaller title */
+    }
+
+    .game-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .score-board {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 2x2 grid */
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .score-item {
+        margin-bottom: 0;
+    }
+
+    .score-item .value {
+        font-size: 1.25rem;
+    }
+
+    .input-area {
+        flex-direction: column; /* Stack input and button */
+    }
+
+    #submit-btn {
+        width: 100%;
+    }
+
+    /* Stack buttons in menus if needed */
+    .menu-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .menu-actions button {
+        width: 100%;
+    }
+
+    .feedback-area {
+        grid-template-columns: 1fr; /* Stack feedback columns */
+    }
 }

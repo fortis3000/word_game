@@ -605,19 +605,24 @@ input[type="text"]:focus {
     }
 
     .score-board {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        /* 2x2 grid */
-        gap: 0.75rem;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        gap: 0.5rem;
         padding: 0.75rem;
     }
 
     .score-item {
         margin-bottom: 0;
+        flex: 1;
     }
 
     .score-item .value {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
+    }
+    
+    .score-item .label {
+        font-size: 0.75rem;
     }
 
     .input-area {
@@ -627,6 +632,8 @@ input[type="text"]:focus {
 
     #submit-btn {
         width: 100%;
+        padding: 1.5rem; /* Increase height */
+        font-size: 1.3rem;
     }
 
     /* Stack buttons in menus if needed */

@@ -607,22 +607,31 @@ input[type="text"]:focus {
     .score-board {
         display: flex;
         flex-direction: row;
-        justify-content: space-around;
-        gap: 0.5rem;
-        padding: 0.75rem;
+        justify-content: space-evenly;
+        /* Even spacing */
+        gap: 0;
+        /* Remove gap to ensure fit */
+        padding: 0.25rem;
+        /* Minimal padding */
+        flex-wrap: nowrap;
+        /* Force single row */
     }
 
     .score-item {
         margin-bottom: 0;
         flex: 1;
+        padding: 0 2px;
+        /* Minimal internal padding */
     }
 
     .score-item .value {
-        font-size: 1.1rem;
+        font-size: 1rem;
+        /* Smaller font to fit */
     }
-    
+
     .score-item .label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
+        /* Smaller labels */
     }
 
     .input-area {
@@ -632,7 +641,13 @@ input[type="text"]:focus {
 
     #submit-btn {
         width: 100%;
-        padding: 1.5rem; /* Increase height */
+        min-height: 70px;
+        /* Explicit minimum height */
+        padding: 0;
+        /* Remove padding dependency */
+        display: flex;
+        justify-content: center;
+        align-items: center;
         font-size: 1.3rem;
     }
 

@@ -15,18 +15,22 @@
         <!-- Content same as above -->
         <main id="start-screen" class="screen-center">
             <header>
-                <h1>Word Context Game</h1>
+                <h1 id="main-title">Word Context Game</h1>
             </header>
 
             <div class="menu-actions column" style="margin-bottom: 2rem;">
-                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Select Language:</p>
                 <button class="primary-btn lang-btn" data-lang="en">English</button>
                 <button class="primary-btn lang-btn" data-lang="de">Deutsch</button>
                 <button class="primary-btn lang-btn" data-lang="ru">Русский</button>
             </div>
 
-            <p id="instruction-text" class="hidden">• Target a word with its synonym to get the maximum score and reveal
-                the theme.</p>
+            <div class="tutorial-wrapper">
+                <h3 id="tutorial-title" class="tutorial-title">Guess a word that has a similar meaning</h3>
+            </div>
+
+            <div class="tutorial-wrapper">
+                <img id="tutorial-img" src="/img/tutorial_analogy.png" alt="Word Analogy Tutorial" class="tutorial-img">
+            </div>
 
             <div class="menu-actions">
                 <button id="start-btn" class="primary-btn large-btn hidden">Start Game</button>
@@ -35,7 +39,7 @@
 
         <main id="game-area" class="hidden">
             <header class="game-header">
-                <h2>Word Context Game</h2>
+                <h2 id="game-title">Word Context Game</h2>
                 <div class="header-actions">
                     <button id="shuffle-btn" class="secondary-btn small-btn" title="Shuffle Words (Cost: 200)">🔄
                         200</button>
@@ -46,20 +50,22 @@
 
             <div class="score-board">
                 <div class="score-item">
-                    <span class="label">Lives</span>
-                    <div id="lives-container" class="lives-hearts"></div>
+                    <span class="label" id="lives-label">Lives</span>
+                    <div class="lives-wrapper">
+                        <div id="lives-heart" class="lives-heart">♥</div>
+                        <span id="lives-count" class="lives-count">x5</span>
+                    </div>
                 </div>
                 <div class="score-item">
-                    <span class="label">Time</span>
+                    <span class="label" id="time-label">Time</span>
                     <span id="time-remaining" class="value">3:00</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">Previous round score</span>
-                    <span id="round-score" class="value">0</span>
-                </div>
-                <div class="score-item">
-                    <span class="label">Total Score</span>
-                    <span id="total-score" class="value">0</span>
+                    <span class="label" id="score-label">Score</span>
+                    <div class="score-combined">
+                        <span id="total-score" class="value">0</span>
+                        <span id="round-score" class="value-mini"></span>
+                    </div>
                 </div>
             </div>
 
@@ -84,10 +90,10 @@
         </main>
 
         <main id="game-over-screen" class="hidden screen-center">
-            <h2>Game Over!</h2>
-            <p>You found all the words!</p>
+            <h2 id="game-over-title">Game Over!</h2>
+            <p id="game-over-msg">You found all the words!</p>
             <div class="final-score">
-                <span class="label">Final Score</span>
+                <span class="label" id="final-score-label">Final Score</span>
                 <span id="final-score" class="value">0</span>
             </div>
             <div class="game-over-actions">
@@ -98,15 +104,15 @@
         </main>
 
         <main id="summary-screen" class="hidden screen-center">
-            <h2>Session Ended</h2>
-            <p>Good effort! Here is how you did:</p>
+            <h2 id="summary-title">Session Ended</h2>
+            <p id="summary-msg">Good effort! Here is how you did:</p>
             <div class="final-score">
-                <span class="label">Total Score</span>
+                <span class="label" id="summary-score-label">Total Score</span>
                 <span id="summary-score" class="value">0</span>
             </div>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <span class="label">Words Found</span>
+                    <span class="label" id="words-found-label">Words Found</span>
                     <span id="summary-words-found" class="value-small">0</span>
                 </div>
             </div>
@@ -118,7 +124,7 @@
 
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js?v=8"></script>
+    <script src="/js/app.js?v=12"></script>
 </body>
 
 </html>

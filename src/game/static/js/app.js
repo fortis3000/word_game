@@ -25,13 +25,13 @@ const langBtns = document.querySelectorAll('.lang-btn');
 
 // UI Elements
 const currentWordsList = document.getElementById('current-words-list');
-const livesContainer = document.getElementById('lives-container');
+const livesHeart = document.getElementById('lives-heart');
+const livesCount = document.getElementById('lives-count');
 const roundScoreEl = document.getElementById('round-score');
 const totalScoreEl = document.getElementById('total-score');
 const finalScoreEl = document.getElementById('final-score');
 let timeRemainingEl = document.getElementById('time-remaining');
 const toastContainer = document.getElementById('toast-container');
-const instructionText = document.getElementById('instruction-text');
 const contextHeader = document.getElementById('context-header');
 
 let timerInterval = null;
@@ -96,11 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Auto-click start logic
-        instructionText.textContent = getInstructionText(selectedLang);
-        startBtn.textContent = getStartBtnText(selectedLang);
-        wordInput.placeholder = getInputPlaceholder(selectedLang);
-        submitBtn.textContent = getSubmitBtnText(selectedLang);
-        if (contextHeader) contextHeader.textContent = getContextHeader(selectedLang);
+        updateStaticText(selectedLang);
 
         // Immediate start
         startGame();
@@ -119,75 +115,142 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Helper to get text without selecting (for auto-start usage)
-function getStartBtnText(lang) {
-    const btnTexts = {
-        'en': "Start Game",
-        'de': "Spiel Starten",
-        'ru': "Начать игру"
-    };
-    return btnTexts[lang] || btnTexts['en'];
-}
-
-function getInstructionText(lang) {
-    const texts = {
-        'en': "• Target a word with its synonym to get the maximum score.",
-        'de': "• Nutze Synonyme zu den gezeigten Wörtern, um die maximale Punktzahl zu erreichen.",
-        'ru': "• Используйте синонимы к словам, чтобы набрать максимум очков."
-    };
-    return texts[lang] || texts['en'];
-}
-
-function getInputPlaceholder(lang) {
-    const texts = {
-        'en': "Type a word close to one or several on the screen...",
-        'de': "Tippe ein Wort ein, das einem oder mehreren auf dem Schirm ähnelt...",
-        'ru': "Введите слово, близкое к одному или нескольким на экране..."
-    };
-    return texts[lang] || texts['en'];
-}
-
-function getSubmitBtnText(lang) {
-    const texts = {
-        'en': "Submit",
-        'de': "Senden",
-        'ru': "Отправить"
-    };
-    return texts[lang] || texts['en'];
-}
-
-function getContextHeader(lang) {
-    const texts = {
-        'en': "Current Context",
-        'de': "Aktueller Kontext",
-        'ru': "Текущий контекст"
-    };
-    return texts[lang] || texts['en'];
-}
-
-function shareScore(score) {
-    if (window.Telegram && window.Telegram.WebApp) {
-        try {
-            const params = new URLSearchParams(window.location.search);
-            const seed = params.get('seed') || 'random';
-
-            // Format: score <score> <seed>
-            const query = `score ${score} ${seed}`;
-
-            console.log("Switching to inline query with:", query);
-
-            // This opens the chat selection menu to share the result
-            window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
-        } catch (e) {
-            console.error("switchInlineQuery failed:", e);
-            showToast(`Error: ${e.message}`, 'error');
-            alert(`Error: ${e.message}`);
-        }
-    } else {
-        const msg = "Feature only available in Telegram!";
-        showToast(msg, "warning");
-        alert(msg);
+// Translations
+const TRANSLATIONS = {
+    'en': {
+        startBtn: "Start Game",
+        tutorialTitle: "Guess a word that has a similar meaning",
+        tutorialImg: "/img/tutorial_analogy.png",
+        placeholder: "Type a word close to one or several on the screen...",
+        submitBtn: "Submit",
+        contextHeader: "Current Context",
+        mainTitle: "Word Context Game",
+        gameTitle: "Word Context Game",
+        lives: "Lives",
+        time: "Time",
+        score: "Score",
+        quit: "Quit",
+        gameOverTitle: "Game Over!",
+        wonTitle: "You Won!",
+        timeUpTitle: "Time's Up!",
+        outOfLivesMsg: "You ran out of lives!",
+        wonMsg: "You found all the words!",
+        scoreMsg: "You scored {score} points!",
+        finalScore: "Final Score",
+        playAgain: "Play Again",
+        shareScore: "Share Score 🏆",
+        mainMenu: "Main Menu",
+        sessionEnded: "Session Ended",
+        summaryMsg: "Good effort! Here is how you did:",
+        totalScore: "Total Score",
+        wordsFound: "Words Found",
+        backToMenu: "Back to Menu",
+        shuffleCost: "Not enough points! Need 200.",
+        shuffleSuccess: "Words shuffled! -200 pts",
+        gameStarted: "Game Started! Good Luck!",
+        hintToast: "Type words that are semantically similar to the displayed words!",
+        shuffleTooltip: "Shuffle Words (Cost: 200)",
+        hintTooltip: "Hint",
+        featureTelegramOnly: "Feature only available in Telegram!",
+        typeWordWarning: "Please type a word!",
+        wordOnScreenWarning: "Word is already on screen!",
+        invalidMoveWarning: "Invalid Move",
+        submitError: "Error submitting word. Please try again.",
+        startError: "Could not start game. Please try again.",
+        selectLangWarning: "Please select a language first!",
+        stopError: "Error stopping game session."
+    },
+    'de': {
+        startBtn: "Spiel Starten",
+        tutorialTitle: "Errate ein Wort, das eine ähnliche Bedeutung hat",
+        tutorialImg: "/img/tutorial_analogy_de.png",
+        placeholder: "Tippe ein Wort ein, das einem oder mehreren auf dem Schirm ähnelt...",
+        submitBtn: "Senden",
+        contextHeader: "Aktueller Kontext",
+        mainTitle: "Word Context Game",
+        gameTitle: "Word Context Game",
+        lives: "Leben",
+        time: "Zeit",
+        score: "Punkte",
+        quit: "Beenden",
+        gameOverTitle: "Spiel vorbei!",
+        wonTitle: "Gewonnen!",
+        timeUpTitle: "Die Zeit ist um!",
+        outOfLivesMsg: "Du hast keine Leben mehr!",
+        wonMsg: "Du hast alle Wörter gefunden!",
+        scoreMsg: "Du hast {score} Punkte erzielt!",
+        finalScore: "Endstand",
+        playAgain: "Nochmal spielen",
+        shareScore: "Ergebnis teilen 🏆",
+        mainMenu: "Hauptmenü",
+        sessionEnded: "Sitzung beendet",
+        summaryMsg: "Guter Versuch! Hier ist dein Ergebnis:",
+        totalScore: "Gesamtpunktzahl",
+        wordsFound: "Gefundene Wörter",
+        backToMenu: "Zurück zum Menü",
+        shuffleCost: "Nicht genug Punkte! Benötigt werden 200.",
+        shuffleSuccess: "Wörter gemischt! -200 Pkt",
+        gameStarted: "Spiel gestartet! Viel Erfolg!",
+        hintToast: "Tippe Wörter ein, die den angezeigten Wörtern inhaltlich ähnlich sind!",
+        shuffleTooltip: "Wörter mischen (Kosten: 200)",
+        hintTooltip: "Hinweis",
+        featureTelegramOnly: "Funktion nur in Telegram verfügbar!",
+        typeWordWarning: "Bitte tippe ein Wort ein!",
+        wordOnScreenWarning: "Wort ist bereits auf dem Bildschirm!",
+        invalidMoveWarning: "Ungültiger Zug",
+        submitError: "Fehler beim Senden des Wortes. Bitte versuche es erneut.",
+        startError: "Spiel konnte nicht gestartet werden. Bitte versuche es erneut.",
+        selectLangWarning: "Bitte wähle zuerst eine Sprache!",
+        stopError: "Fehler beim Beenden der Spielsitzung."
+    },
+    'ru': {
+        startBtn: "Начать игру",
+        tutorialTitle: "Угадайте слово, которое имеет похожее значение",
+        tutorialImg: "/img/tutorial_analogy_ru.png",
+        placeholder: "Введите слово, близкое к одному или нескольким на экране...",
+        submitBtn: "Отправить",
+        contextHeader: "Текущий контекст",
+        mainTitle: "Word Context Game",
+        gameTitle: "Word Context Game",
+        lives: "Жизни",
+        time: "Время",
+        score: "Очки",
+        quit: "Выйти",
+        gameOverTitle: "Игра окончена!",
+        wonTitle: "Победа!",
+        timeUpTitle: "Время вышло!",
+        outOfLivesMsg: "Жизни закончились!",
+        wonMsg: "Вы нашли все слова!",
+        scoreMsg: "Вы набрали {score} очков!",
+        finalScore: "Итоговый счет",
+        playAgain: "Играть снова",
+        shareScore: "Поделиться 🏆",
+        mainMenu: "Главное меню",
+        sessionEnded: "Сессия завершена",
+        summaryMsg: "Хорошая попытка! Вот ваши результаты:",
+        totalScore: "Общий счет",
+        wordsFound: "Найденные слова",
+        backToMenu: "Назад в меню",
+        shuffleCost: "Недостаточно очков! Нужно 200.",
+        shuffleSuccess: "Слова перемешаны! -200 очков",
+        gameStarted: "Игра началась! Удачи!",
+        hintToast: "Вводите слова, которые по смыслу похожи на отображаемые!",
+        shuffleTooltip: "Перемешать слова (Цена: 200)",
+        hintTooltip: "Подсказка",
+        featureTelegramOnly: "Функция доступна только в Telegram!",
+        typeWordWarning: "Пожалуйста, введите слово!",
+        wordOnScreenWarning: "Слово уже на экране!",
+        invalidMoveWarning: "Неверный ход",
+        submitError: "Ошибка отправки слова. Попробуйте еще раз.",
+        startError: "Не удалось начать игру. Попробуйте еще раз.",
+        selectLangWarning: "Пожалуйста, выберите язык!",
+        stopError: "Ошибка завершения сессии."
     }
+};
+
+function getText(key, lang) {
+    const l = lang || 'en';
+    return (TRANSLATIONS[l] && TRANSLATIONS[l][key]) || TRANSLATIONS['en'][key];
 }
 
 function selectLanguage(lang, btn) {
@@ -204,16 +267,67 @@ function selectLanguage(lang, btn) {
 
     // Show start button and instruction
     startBtn.classList.remove('hidden');
-    instructionText.classList.remove('hidden');
 
-    // Update instructions based on language
-    instructionText.textContent = getInstructionText(selectedLang);
-    wordInput.placeholder = getInputPlaceholder(selectedLang);
-    submitBtn.textContent = getSubmitBtnText(selectedLang);
-    if (contextHeader) contextHeader.textContent = getContextHeader(selectedLang);
+    updateStaticText(selectedLang);
+}
 
-    // Update button text
-    startBtn.textContent = getStartBtnText(selectedLang);
+function updateStaticText(lang) {
+    // Main Screen
+    startBtn.textContent = getText('startBtn', lang);
+
+    // Tutorial
+    updateTextContent('tutorial-title', getText('tutorialTitle', lang));
+    const tutorialImg = document.getElementById('tutorial-img');
+    if (tutorialImg) {
+        tutorialImg.src = getText('tutorialImg', lang);
+    }
+
+    if (document.getElementById('main-title')) {
+        document.getElementById('main-title').textContent = getText('mainTitle', lang);
+    }
+
+    // Game Area
+    if (document.getElementById('game-title')) {
+        document.getElementById('game-title').textContent = getText('gameTitle', lang);
+    }
+    if (contextHeader) contextHeader.textContent = getText('contextHeader', lang);
+
+    // Labels
+    updateTextContent('lives-label', getText('lives', lang));
+    updateTextContent('time-label', getText('time', lang));
+    updateTextContent('score-label', getText('score', lang));
+
+    // buttons
+    wordInput.placeholder = getText('placeholder', lang);
+    submitBtn.textContent = getText('submitBtn', lang);
+    quitBtn.textContent = getText('quit', lang);
+
+    // Game Over / Summary Static
+    updateTextContent('final-score-label', getText('finalScore', lang));
+    updateTextContent('summary-score-label', getText('totalScore', lang));
+    updateTextContent('words-found-label', getText('wordsFound', lang));
+    updateTextContent('summary-title', getText('sessionEnded', lang));
+    updateTextContent('summary-msg', getText('summaryMsg', lang));
+
+    // Action Buttons
+    restartBtn.textContent = getText('playAgain', lang);
+    backToMenuBtn.textContent = getText('mainMenu', lang);
+    summaryBackBtn.textContent = getText('backToMenu', lang);
+
+    if (shareScoreBtnGameover) shareScoreBtnGameover.textContent = getText('shareScore', lang);
+    if (shareScoreBtnSummary) shareScoreBtnSummary.textContent = getText('shareScore', lang);
+
+    // Tooltips
+    if (shuffleBtn) shuffleBtn.title = getText('shuffleTooltip', lang);
+    if (hintBtn) hintBtn.title = getText('hintTooltip', lang);
+
+    // Document Title
+    document.title = getText('gameTitle', lang);
+}
+
+function updateTextContent(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
 }
 
 function showMainMenu() {
@@ -227,7 +341,6 @@ function showMainMenu() {
     // If we want to force re-selection:
     selectedLang = null;
     startBtn.classList.add('hidden');
-    instructionText.classList.add('hidden');
     langBtns.forEach(b => {
         b.style.border = 'none';
         b.style.opacity = '1';
@@ -235,12 +348,7 @@ function showMainMenu() {
 }
 
 function showHint() {
-    const hints = {
-        'en': "Type words that are semantically similar to the displayed words!",
-        'de': "Tippe Wörter ein, die den angezeigten Wörtern inhaltlich ähnlich sind!",
-        'ru': "Вводите слова, которые по смыслу похожи на отображаемые!"
-    };
-    showToast(hints[selectedLang] || hints['en'], 'info');
+    showToast(getText('hintToast', selectedLang), 'info');
 }
 
 async function shuffleWords() {
@@ -261,12 +369,7 @@ async function shuffleWords() {
 
         if (response.status === 400) {
             // Not enough points
-            const errMsgs = {
-                'en': "Not enough points! Need 200.",
-                'de': "Nicht genug Punkte! Benötigt werden 200.",
-                'ru': "Недостаточно очков! Нужно 200."
-            };
-            showToast(errMsgs[selectedLang] || errMsgs['en'], 'warning');
+            showToast(getText('shuffleCost', selectedLang), 'warning');
             return;
         }
 
@@ -275,12 +378,7 @@ async function shuffleWords() {
         const gameState = await response.json();
         updateUI(gameState);
 
-        const successMsgs = {
-            'en': "Words shuffled! -200 pts",
-            'de': "Wörter gemischt! -200 Pkt",
-            'ru': "Слова перемешаны! -200 очков"
-        };
-        showToast(successMsgs[selectedLang] || successMsgs['en'], 'success');
+        showToast(getText('shuffleSuccess', selectedLang), 'success');
 
     } catch (error) {
         console.error('Error shuffling words:', error);
@@ -290,7 +388,7 @@ async function shuffleWords() {
 
 async function startGame() {
     if (!selectedLang) {
-        showToast('Please select a language first!', 'warning');
+        showToast(getText('selectLangWarning', selectedLang), 'warning');
         return;
     }
 
@@ -317,15 +415,10 @@ async function startGame() {
         showGameArea();
         wordInput.focus();
 
-        const startMsgs = {
-            'en': 'Game Started! Good Luck!',
-            'de': 'Spiel gestartet! Viel Erfolg!',
-            'ru': 'Игра началась! Удачи!'
-        };
-        showToast(startMsgs[selectedLang] || startMsgs['en'], 'info');
+        showToast(getText('gameStarted', selectedLang), 'info');
     } catch (error) {
         console.error('Error starting game:', error);
-        showToast('Could not start game. Please try again.', 'warning');
+        showToast(getText('startError', selectedLang), 'warning');
     }
 }
 
@@ -347,6 +440,7 @@ async function quitGame() {
     } catch (error) {
         console.warn('Error stopping game session:', error);
         showMainMenu();
+        showToast(getText('stopError', selectedLang), 'error');
     } finally {
         sessionId = null;
     }
@@ -373,7 +467,7 @@ async function submitWord() {
     const word = wordInput.value.trim();
 
     if (!word) {
-        showToast('Please type a word!', 'warning');
+        showToast(getText('typeWordWarning', selectedLang), 'warning');
         wordInput.focus();
         return;
     }
@@ -390,9 +484,9 @@ async function submitWord() {
         if (response.status === 400) {
             const errData = await response.json();
             if (errData.detail && (errData.detail.includes("too similar") || errData.detail.includes("already on screen"))) {
-                showToast('Word is already on screen!', 'warning');
+                showToast(getText('wordOnScreenWarning', selectedLang), 'warning');
             } else {
-                showToast(errData.detail || 'Invalid Move', 'warning');
+                showToast(errData.detail || getText('invalidMoveWarning', selectedLang), 'warning');
             }
             wordInput.value = '';
             wordInput.focus();
@@ -423,7 +517,7 @@ async function submitWord() {
 
     } catch (error) {
         console.error('Error submitting word:', error);
-        showToast('Error submitting word. Please try again.', 'warning');
+        showToast(getText('submitError', selectedLang), 'warning');
     }
 }
 
@@ -460,26 +554,22 @@ function updateUI(state) {
         currentWordsList.appendChild(li);
     });
 
-    roundScoreEl.textContent = state.round_score > 0 ? `+${state.round_score}` : state.round_score;
+    roundScoreEl.textContent = state.round_score > 0 ? `+${state.round_score}` : '';
     totalScoreEl.textContent = state.total_score;
-    
+
     if (state.time_remaining !== undefined) {
         currentTimeRemaining = Math.floor(state.time_remaining);
         if (timeRemainingEl) timeRemainingEl.textContent = formatTime(currentTimeRemaining);
         startTimer();
     }
-    
-    if (livesContainer) {
-        livesContainer.innerHTML = '';
+
+    if (livesHeart && livesCount) {
         const currentLives = state.lives !== undefined ? state.lives : 5;
         const totalLives = 5; // Assuming 5 is max lives
-        
-        for (let i = 0; i < totalLives; i++) {
-            const heart = document.createElement('span');
-            heart.className = `heart ${i < currentLives ? 'active' : ''}`;
-            heart.textContent = '♥';
-            livesContainer.appendChild(heart);
-        }
+        const percentage = Math.max(0, (currentLives / totalLives) * 100);
+
+        livesHeart.style.setProperty('--fill-percent', `${percentage}%`);
+        livesCount.textContent = `x${currentLives}`;
     }
 }
 
@@ -488,19 +578,44 @@ function handleGameOver(state) {
     gameArea.classList.add('hidden');
     gameOverScreen.classList.remove('hidden');
     finalScoreEl.textContent = state.total_score;
-    
+
     const gameOverTitle = gameOverScreen.querySelector('h2');
     const gameOverMsg = gameOverScreen.querySelector('p');
-    
+
     if (state.lives <= 0) {
-        if (gameOverTitle) gameOverTitle.textContent = "Game Over!";
-        if (gameOverMsg) gameOverMsg.textContent = "You ran out of lives!";
+        if (gameOverTitle) gameOverTitle.textContent = getText('gameOverTitle', selectedLang);
+        if (gameOverMsg) gameOverMsg.textContent = getText('outOfLivesMsg', selectedLang);
     } else if (state.time_remaining !== undefined && state.time_remaining <= 0) {
-        if (gameOverTitle) gameOverTitle.textContent = "Time's Up!";
-        if (gameOverMsg) gameOverMsg.textContent = `You scored ${state.total_score} points!`;
+        if (gameOverTitle) gameOverTitle.textContent = getText('timeUpTitle', selectedLang);
+        if (gameOverMsg) gameOverMsg.textContent = getText('scoreMsg', selectedLang).replace('{score}', state.total_score);
     } else {
-        if (gameOverTitle) gameOverTitle.textContent = "You Won!";
-        if (gameOverMsg) gameOverMsg.textContent = "You found all the words!";
+        if (gameOverTitle) gameOverTitle.textContent = getText('wonTitle', selectedLang);
+        if (gameOverMsg) gameOverMsg.textContent = getText('wonMsg', selectedLang);
+    }
+}
+
+function shareScore(score) {
+    if (window.Telegram && window.Telegram.WebApp) {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const seed = params.get('seed') || 'random';
+
+            // Format: score <score> <seed>
+            const query = `score ${score} ${seed}`;
+
+            console.log("Switching to inline query with:", query);
+
+            // This opens the chat selection menu to share the result
+            window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
+        } catch (e) {
+            console.error("switchInlineQuery failed:", e);
+            showToast(`Error: ${e.message}`, 'error');
+            alert(`Error: ${e.message}`);
+        }
+    } else {
+        const msg = getText('featureTelegramOnly', selectedLang);
+        showToast(msg, "warning");
+        alert(msg);
     }
 }
 

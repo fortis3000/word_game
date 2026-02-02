@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Script to calculate embeddings for dictionary files.
+
+This script iterates through a directory of CSV dictionary files,
+calculates embeddings for the words using a SentenceTransformer model,
+and saves the results as pickle files in a specified output directory.
+"""
+
 import argparse
 import os
 import pickle

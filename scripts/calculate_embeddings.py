@@ -16,10 +16,13 @@ from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
 # Add project root to sys.path to allow imports from src
-sys.path.append(os.getcwd())
+# Use the script's location to determine the project root
+project_root = Path(__file__).resolve().parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
 
-from src.data.loader import load_words
-from src.utils.logger import get_logger
+from src.data.loader import load_words  # noqa: E402
+from src.utils.logger import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 

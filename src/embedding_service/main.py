@@ -1,5 +1,6 @@
 """Module for running embedding service with Gemma model."""
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -91,7 +92,10 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()
-        embeddings = model.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
+        loop = asyncio.get_running_loop()
+        embeddings = await loop.run_in_executor(
+            None, lambda: model.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
+        )
         logger.debug(f"Generated {len(embeddings)} embeddings.")
 
         # Format response to match OpenAI's format

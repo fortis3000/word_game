@@ -135,10 +135,15 @@ async def get_similarity(request: SimilarityRequest, req: Request) -> Similarity
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()
-        embedding1 = model.encode([request.text1], convert_to_numpy=True, normalize_embeddings=True)
-        embedding2 = model.encode(request.text2, convert_to_numpy=True, normalize_embeddings=True)
+        embedding1 = await asyncio.to_thread(
+            model.encode, [request.text1], convert_to_numpy=True, normalize_embeddings=True
+        )
+        embedding2 = await asyncio.to_thread(
+            model.encode, request.text2, convert_to_numpy=True, normalize_embeddings=True
+        )
 
-        similarities = model.similarity(embedding1, embedding2).tolist()
+        similarities_tensor = await asyncio.to_thread(model.similarity, embedding1, embedding2)
+        similarities = similarities_tensor.tolist()
         logger.info(f"Calculated similarities: {similarities}")
 
         response = SimilarityResponse(similarity_score=similarities[0])
@@ -158,7 +163,7 @@ async def health_check(req: Request):
         # Check if model is loaded and accessible
         model = req.app.state.embedding_service.get_model()
         # Try a simple embedding to verify model is working
-        _ = model.encode(["test"], convert_to_numpy=True)
+        _ = await asyncio.to_thread(model.encode, ["test"], convert_to_numpy=True)
         logger.info("Health check successful: Model is loaded and responsive.")
         return {"status": "healthy", "model": "loaded", "version": "1.0.0"}
     except Exception as e:

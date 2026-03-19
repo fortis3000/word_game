@@ -101,7 +101,7 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
         ]
 
         # Calculate token usage (approximate based on words)
-        total_tokens = sum(len(text.split()) * 1.3 for text in texts)  # rough estimate
+        total_tokens = sum((text.count(" ") + 1 if text else 0) * 1.3 for text in texts)  # rough estimate
         logger.info(f"Approximate token usage for embedding: {int(total_tokens)}")
 
         response = EmbeddingResponse(

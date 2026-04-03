@@ -129,6 +129,7 @@ class WordManager:
 
         # Remove most similar words
         removed_ids = set()
+        round_score = 0
         # Re-apply similarity check in main.py
         for word_id, score in word_scores:
             if score > 0.98:
@@ -150,6 +151,7 @@ class WordManager:
                 )
                 break
             removed_ids.add(word_id)
+            round_score += int(score * 100)
             logger.debug(f"Word '{self.all_words[word_id]}' (score: {score}) marked for removal.")
 
         # Update current words
@@ -166,12 +168,6 @@ class WordManager:
             bonus = len(removed_ids) * self.BONUS_TIME
             self.bonus_time += bonus
             logger.info(f"Added {bonus}s bonus time. Total bonus: {self.bonus_time}")
-
-        # Calculate score
-        round_score = 0
-        for word_id, score in word_scores:
-            if word_id in removed_ids:
-                round_score += int(score * 100)
 
         self.total_score += round_score
 

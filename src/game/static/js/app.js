@@ -609,8 +609,9 @@ function shareScore(score) {
             window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
         } catch (e) {
             console.error("switchInlineQuery failed:", e);
-            showToast(`Error: ${e.message}`, 'error');
-            alert(`Error: ${e.message}`);
+            const msg = getText('featureTelegramOnly', selectedLang);
+            showToast(msg, 'warning');
+            alert(msg);
         }
     } else {
         const msg = getText('featureTelegramOnly', selectedLang);

@@ -1,10 +1,10 @@
-# Word Similarity Game 🧩
+# Word Similarity Game 🎳
 
 [![CI](https://github.com/fortis3000/word_game/actions/workflows/ci.yml/badge.svg)](https://github.com/fortis3000/word_game/actions/workflows/ci.yml)
 
-**Can you find the secret word?** Test your vocabulary and intuition in this
-AI-powered word discovery game. Every word you submit is compared to a hidden
-target—the closer your word's meaning, the higher your score.
+**Can you find the secret word?** Test your vocabulary and intuition in this AI-powered word discovery game. Every word you submit is compared to a hidden target—the closer your word's meaning, the higher your score.
+
+**[🌐 Play on the Web](https://verbotinbox.com/)** | **[🚀 Play on Telegram](https://t.me/learn_words_game_dev_bot)**
 
 ---
 

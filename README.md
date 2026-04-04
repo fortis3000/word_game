@@ -1,4 +1,4 @@
-# Word Similarity Game 🧩
+# Word Similarity Game 🎳
 
 [![CI](https://github.com/fortis3000/word_game/actions/workflows/ci.yml/badge.svg)](https://github.com/fortis3000/word_game/actions/workflows/ci.yml)
 

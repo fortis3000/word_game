@@ -139,6 +139,8 @@ async def get_similarity(request: SimilarityRequest, req: Request) -> Similarity
     """Calculate cosine similarity between two texts."""
     logger.info(f"Received similarity request for: {request.text1}, text2: {request.text2}")
     logger.info(f"Similarity request details: {request.model_dump_json()}")
+    if not request.text2:
+        return SimilarityResponse(similarity_score=[])
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()

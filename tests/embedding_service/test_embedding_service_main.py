@@ -162,6 +162,7 @@ def test_get_similarity_unsimilar(test_client, text1, text2, expected_score):
     # v_pencil . v_horse = 0. <= 0.65 -> True
     assert data["similarity_score"][0] <= expected_score
 
+
 def test_get_similarity_empty_list(test_client):
     """Test the similarity endpoint with empty list."""
     response = test_client.post("/v1/get_similarity", json={"text1": "test", "text2": []})

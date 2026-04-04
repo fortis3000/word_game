@@ -1,9 +1,13 @@
 # AGENT GUIDE - Word Game Project
 
 ## 1. Project Overview
-This project is a word similarity game with a Telegram bot and a Web UI interface. It uses a self-hosted sentence transformer model (embedding service) to calculate word embeddings and determine similarity.
+
+This project is a word similarity game with a Telegram bot and a Web UI
+interface. It uses a self-hosted sentence transformer model (embedding service)
+to calculate word embeddings and determine similarity.
 
 **Components:**
+
 - **FastAPI-based embedding service**: `src/embedding_service`
 - **Game Application (Web UI & FastAPI)**: `src/game`
 - **Telegram bot**: `src/telegram_bot`
@@ -11,6 +15,7 @@ This project is a word similarity game with a Telegram bot and a Web UI interfac
 - **Shared utilities**: `src/shared`, `src/utils`
 
 ## 2. Technical Standards & Tech Stack
+
 - **Language**: Python 3.12+
 - **Dependency Management**: [uv](https://github.com/astral-sh/uv)
 - **Linting/Formatting**: [ruff](https://docs.astral.sh/ruff/)
@@ -19,6 +24,7 @@ This project is a word similarity game with a Telegram bot and a Web UI interfac
 - **Deployment**: Docker & Docker Compose
 
 ## 3. Project Structure
+
 ```text
 ├── configs/             # Configuration files (e.g., prometheus.yml)
 ├── data/                # Data folders (external, interim, processed, raw)
@@ -45,32 +51,44 @@ This project is a word similarity game with a Telegram bot and a Web UI interfac
 ## 4. Development Workflow
 
 ### Dependency Management
+
 - **Install/Sync**: `uv sync --all-extras`
 - **Add Dependency**: `uv add <package>`
 - **Run Scripts**: `uv run python -m ...`
 
+**MANDATORY**: ALWAYS use `uv` to run any Python code or scripts (e.g., `uv run python ...`). NEVER use the standard `python` or `python3` commands directly to ensure the correct virtual environment and dependencies are used.
+
 ### Code Quality (MANDATORY)
+
 Run the following before submitting any changes:
+
 ```bash
 make precommit
 ```
+
 *This runs `ruff format` and `ruff check --fix`.*
 
 ### Testing
+
 - Run all tests: `make test` (or `uv run python -m pytest`)
 - **Requirement**: Any new feature must have corresponding tests in `tests/`.
 
 ### Running Locally
+
 Use Docker Compose to spin up the services:
+
 ```bash
 docker compose -f docker/docker-compose.yaml up --build
 ```
+
 *Web apps should default to port 10000+ if running outside docker.*
 
 ## 5. Coding Standards & Best Practices
 
 ### Logging (CRITICAL)
+
 **ALWAYS** use the project's custom logger. Do not use standard `logging` or `print`.
+
 ```python
 from src.utils.logger import get_logger
 
@@ -79,11 +97,14 @@ logger.info("Message")
 ```
 
 ### Imports
+
 **Internal project imports:**
+
 - **Functions**: Use namespace imports (`from module import module_name` → `module_name.function()`)
 - **Classes/Exceptions**: Use direct imports (`from module import TheClass`)
 
 ### Python Best Practices
+
 - **Paths**: Use `pathlib.Path` instead of `os.path`.
 - **Typing**: Use modern syntax (e.g., `list[int]`, `str | None` for optional).
 - **Control Flow**: Use guarding clauses (early returns) to avoid nested code.
@@ -91,5 +112,6 @@ logger.info("Message")
 - **Files**: Always use absolute paths when interacting with files.
 
 ### Configuration
+
 - Check `configs/` or environment variables.
 - Do not hardcode secrets or absolute local paths that won't work in Docker.

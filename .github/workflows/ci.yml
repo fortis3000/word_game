@@ -43,6 +43,9 @@ jobs:
       - name: Checking formatting with ruff
         run: ruff format .
 
+      - name: Checking markdown linting with pymarkdown
+        run: uv run pymarkdown scan .
+
   testing:
     runs-on: ubuntu-latest
     steps:

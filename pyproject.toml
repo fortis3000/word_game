@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 lint = [
     "ruff==0.14.2",
+    "pymarkdownlnt>=0.9.36",
 ]
 test = [
     "pytest>=8.2.0",

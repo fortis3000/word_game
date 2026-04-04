@@ -34,7 +34,7 @@ services:
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000
     volumes:
       - ../data:/app/data
-      - ..src/:app/src
+      - ../src:/app/src
     command: [ "uv", "run", "uvicorn", "src.game.api:app", "--host", "0.0.0.0", "--port", "8080" ]
 
   telegram-bot:
@@ -52,6 +52,25 @@ services:
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000
     volumes:
       - ../data:/app/data
-      - ..src/:app/src
-      - ..configs/:app/configs
+      - ../src:/app/src
+      - ../configs:/app/configs
     command: [ "uv", "run", "python", "-m", "src.telegram_bot" ]
+
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      - word-game-net
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ../configs/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    environment:
+      - PROMETHEUS_PASSWORD=${PROMETHEUS_PASSWORD:-changeme_in_production}
+    entrypoint: [ "/bin/sh", "-c", "echo \"$$PROMETHEUS_PASSWORD\" > /prometheus/prom_password && exec /bin/prometheus \"$$@\"", "--" ]
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+volumes:
+  prometheus_data:

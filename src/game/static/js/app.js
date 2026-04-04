@@ -151,7 +151,7 @@ const TRANSLATIONS = {
         hintToast: "Type words that are semantically similar to the displayed words!",
         shuffleTooltip: "Shuffle Words (Cost: 200)",
         hintTooltip: "Hint",
-        featureTelegramOnly: "Feature only available in Telegram!",
+        featureTelegramOnly: "Available only in Telegram",
         typeWordWarning: "Please type a word!",
         wordOnScreenWarning: "Word is already on screen!",
         invalidMoveWarning: "Invalid Move",
@@ -194,7 +194,7 @@ const TRANSLATIONS = {
         hintToast: "Tippe Wörter ein, die den angezeigten Wörtern inhaltlich ähnlich sind!",
         shuffleTooltip: "Wörter mischen (Kosten: 200)",
         hintTooltip: "Hinweis",
-        featureTelegramOnly: "Funktion nur in Telegram verfügbar!",
+        featureTelegramOnly: "Nur in Telegram verfügbar",
         typeWordWarning: "Bitte tippe ein Wort ein!",
         wordOnScreenWarning: "Wort ist bereits auf dem Bildschirm!",
         invalidMoveWarning: "Ungültiger Zug",
@@ -237,7 +237,7 @@ const TRANSLATIONS = {
         hintToast: "Вводите слова, которые по смыслу похожи на отображаемые!",
         shuffleTooltip: "Перемешать слова (Цена: 200)",
         hintTooltip: "Подсказка",
-        featureTelegramOnly: "Функция доступна только в Telegram!",
+        featureTelegramOnly: "Доступно только в Telegram",
         typeWordWarning: "Пожалуйста, введите слово!",
         wordOnScreenWarning: "Слово уже на экране!",
         invalidMoveWarning: "Неверный ход",
@@ -595,7 +595,29 @@ function handleGameOver(state) {
 }
 
 function shareScore(score) {
-    if (window.Telegram && window.Telegram.WebApp) {
+    const msg = getText('featureTelegramOnly', selectedLang) || 'Available only in Telegram';
+    console.log("shareScore called with score:", score, "platform:", window.Telegram?.WebApp?.platform);
+
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        const platform = window.Telegram.WebApp.platform || 'unknown';
+        const isWebPlatform = ['web', 'weba', 'webk'].includes(platform);
+        
+        // If it's a web platform, we already know it probably won't support switchInlineQuery reliably
+        if (isWebPlatform) {
+            console.log("Prevented switchInlineQuery on web platform:", platform);
+            showToast(msg, 'warning');
+            return;
+        }
+
+        // Check if isSupported exists (added in later versions)
+        if (window.Telegram.WebApp.isSupported) {
+            if (!window.Telegram.WebApp.isSupported('switchInlineQuery')) {
+                console.log("switchInlineQuery not supported according to isSupported()");
+                showToast(msg, 'warning');
+                return;
+            }
+        }
+
         try {
             const params = new URLSearchParams(window.location.search);
             const seed = params.get('seed') || 'random';
@@ -603,19 +625,16 @@ function shareScore(score) {
             // Format: score <score> <seed>
             const query = `score ${score} ${seed}`;
 
-            console.log("Switching to inline query with:", query);
-
-            // This opens the chat selection menu to share the result
+            console.log("Calling switchInlineQuery with:", query);
             window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
         } catch (e) {
-            console.error("switchInlineQuery failed:", e);
-            showToast(`Error: ${e.message}`, 'error');
-            alert(`Error: ${e.message}`);
+            // We catch EVERYTHING here to ensure no library error leaks to the user
+            console.warn("Caught Telegram WebApp error during share:", e);
+            showToast(msg, 'warning');
         }
     } else {
-        const msg = getText('featureTelegramOnly', selectedLang);
+        console.log("No Telegram initData found, showing fallback message.");
         showToast(msg, "warning");
-        alert(msg);
     }
 }
 

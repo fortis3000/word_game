@@ -17,7 +17,7 @@
         "help_message": "📚 *Word Similarity Game Commands*\n\n🟢 /start \\- Start a new game\n🛑 /stop \\- Stop the current game\nℹ️ /help \\- Show this message\n\n🎮 *Tip:* Think of synonyms or related concepts\\!",
         "none": "None",
         "enter_word_prompt": "👇 Your next word?",
-        "button_hint": "💡 Hint",
+        "button_hint": "ℹ️ Hint",
         "language_select": "Please choose your language / Bitte wählen Sie Ihre Sprache / Выберите язык:"
     },
     "de": {
@@ -38,7 +38,7 @@
         "help_message": "📚 *Befehle*\n\n🟢 /start \\- Neues Spiel\n🛑 /stop \\- Spiel beenden\nℹ️ /help \\- Hilfe anzeigen\n\n🎮 *Tipp:* Denke an Synonyme oder verwandte Begriffe\\!",
         "none": "Keine",
         "enter_word_prompt": "👇 Dein nächstes Wort?",
-        "button_hint": "💡 Hinweis",
+        "button_hint": "ℹ️ Hinweis",
         "language_select": "Please choose your language / Bitte wählen Sie Ihre Sprache / Выберите язык:"
     },
     "ru": {
@@ -59,7 +59,7 @@
         "help_message": "📚 *Команды*\n\n🟢 /start \\- Начать игру\n🛑 /stop \\- Остановить игру\nℹ️ /help \\- Помощь\n\n🎮 *Совет:* Используйте синонимы\\!",
         "none": "Нет",
         "enter_word_prompt": "👇 Ваше слово?",
-        "button_hint": "💡 Подсказка",
+        "button_hint": "ℹ️ Подсказка",
         "language_select": "Please choose your language / Bitte wählen Sie Ihre Sprache / Выберите язык:"
     }
 }

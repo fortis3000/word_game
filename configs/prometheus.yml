@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "game-app"
+    basic_auth:
+      username: 'prom_user'
+      password_file: '/prometheus/prom_password'
+    static_configs:
+      - targets: ["game-app:8080"]

@@ -1,14 +1,17 @@
 import os
 import uuid
 import time
+import secrets
 from typing import Dict
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends, status
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
-from prometheus_client import make_asgi_app
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from src.game.main import WordGame, WordManager, GameState
 from src.shared.embedding_client import EmbeddingClient
@@ -18,7 +21,7 @@ from src.game.metrics import (
     http_request_duration_seconds,
     http_requests_total,
     game_errors_total,
-    game_words_submitted_total
+    game_words_submitted_total,
 )
 
 logger = get_logger(__name__)
@@ -106,9 +109,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Prometheus metrics endpoint
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
+security = HTTPBasic()
+
+PROMETHEUS_USER = os.getenv("PROMETHEUS_USER", "prom_user")
+PROMETHEUS_PASSWORD = os.getenv("PROMETHEUS_PASSWORD", "changeme_in_production")
+
+
+def verify_metrics_auth(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, PROMETHEUS_USER)
+    correct_password = secrets.compare_digest(credentials.password, PROMETHEUS_PASSWORD)
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+
+@app.get("/metrics", include_in_schema=False)
+async def metrics(username: str = Depends(verify_metrics_auth)):
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 def get_client_type(user_agent: str) -> str:
@@ -125,40 +148,47 @@ def get_client_type(user_agent: str) -> str:
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     # Process request
     response = await call_next(request)
 
     # Calculate duration
-    duration = time.time() - start_time
+    duration = time.perf_counter() - start_time
 
     # Get client type
     user_agent = request.headers.get("user-agent", "")
     client_type = get_client_type(user_agent)
 
-    # Extract path from router if available to prevent cardinality explosion from 404s,
-    # otherwise fallback to raw path
-    route = request.scope.get("route")
-    if route:
-        path = route.path
+    # Prevent cardinality explosion by grouping all 404s into a generic path
+    if response.status_code == 404:
+        path = "/unmatched_route"
     else:
-        path = request.url.path
+        route = request.scope.get("route")
+        if route:
+            path = route.path
+        else:
+            path = request.url.path
 
     # Record metrics (skip metrics endpoint itself and static files to avoid noise)
-    if not path.startswith("/metrics") and not path.startswith("/css") and not path.startswith("/js") and not path.startswith("/img"):
+    if (
+        not path.startswith("/metrics")
+        and not path.startswith("/css")
+        and not path.startswith("/js")
+        and not path.startswith("/img")
+    ):
         http_requests_total.labels(
             method=request.method,
             path=path,
             status_code=response.status_code,
-            client_type=client_type
+            client_type=client_type,
         ).inc()
 
         http_request_duration_seconds.labels(
             method=request.method,
             path=path,
             status_code=response.status_code,
-            client_type=client_type
+            client_type=client_type,
         ).observe(duration)
 
     return response

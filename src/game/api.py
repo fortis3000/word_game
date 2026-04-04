@@ -91,7 +91,7 @@ app = FastAPI(lifespan=lifespan)
 
 # CORS
 app.add_middleware(
-    CORSMiddleware,  # type: ignore
+    CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],

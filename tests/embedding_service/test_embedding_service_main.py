@@ -42,7 +42,8 @@ def mock_sentence_transformer():
         }
 
         def encode_side_effect(sentences, convert_to_numpy=True, normalize_embeddings=True):
-            if isinstance(sentences, str):
+            is_single_string = isinstance(sentences, str)
+            if is_single_string:
                 sentences = [sentences]
 
             embeddings = []
@@ -56,7 +57,10 @@ def mock_sentence_transformer():
                     norm = np.linalg.norm(v)
                     embeddings.append(v / norm)
 
-            return np.array(embeddings)
+            result = np.array(embeddings)
+            if is_single_string:
+                return result[0]
+            return result
 
         model.encode.side_effect = encode_side_effect
 
@@ -157,3 +161,11 @@ def test_get_similarity_unsimilar(test_client, text1, text2, expected_score):
     assert "similarity_score" in data
     # v_pencil . v_horse = 0. <= 0.65 -> True
     assert data["similarity_score"][0] <= expected_score
+
+
+def test_get_similarity_empty_list(test_client):
+    """Test the similarity endpoint with empty list."""
+    response = test_client.post("/v1/get_similarity", json={"text1": "test", "text2": []})
+    assert response.status_code == HTTPStatus.OK.value
+    data = response.json()
+    assert data["similarity_score"] == []

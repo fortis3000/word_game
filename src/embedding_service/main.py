@@ -3,6 +3,7 @@
 import os
 import asyncio
 from contextlib import asynccontextmanager
+from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException, Request
 from sentence_transformers import SentenceTransformer
@@ -59,6 +60,13 @@ class EmbeddingService:
             raise RuntimeError("Model not loaded")
         return self.model
 
+    @lru_cache(maxsize=1024)
+    def encode_text(self, text: str):
+        """Encode a single text string with caching."""
+        if self.model is None:
+            raise RuntimeError("Model not loaded")
+        return self.model.encode(text, convert_to_numpy=True, normalize_embeddings=True)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -93,10 +101,7 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()
         embeddings = await asyncio.to_thread(
-            model.encode,
-            texts,
-            convert_to_numpy=True,
-            normalize_embeddings=True
+            model.encode, texts, convert_to_numpy=True, normalize_embeddings=True
         )
         logger.debug(f"Generated {len(embeddings)} embeddings.")
 
@@ -107,7 +112,9 @@ async def create_embedding(request: EmbeddingRequest, req: Request):
         ]
 
         # Calculate token usage (approximate based on words)
-        total_tokens = sum((text.count(" ") + 1 if text else 0) * 1.3 for text in texts)  # rough estimate
+        total_tokens = sum(
+            (text.count(" ") + 1 if text else 0) * 1.3 for text in texts
+        )  # rough estimate
         logger.info(f"Approximate token usage for embedding: {int(total_tokens)}")
 
         response = EmbeddingResponse(
@@ -132,6 +139,8 @@ async def get_similarity(request: SimilarityRequest, req: Request) -> Similarity
     """Calculate cosine similarity between two texts."""
     logger.info(f"Received similarity request for: {request.text1}, text2: {request.text2}")
     logger.info(f"Similarity request details: {request.model_dump_json()}")
+    if not request.text2:
+        return SimilarityResponse(similarity_score=[])
     try:
         # Get model and generate embeddings
         model = req.app.state.embedding_service.get_model()

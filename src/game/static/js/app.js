@@ -595,7 +595,29 @@ function handleGameOver(state) {
 }
 
 function shareScore(score) {
-    if (window.Telegram && window.Telegram.WebApp) {
+    const msg = getText('featureTelegramOnly', selectedLang) || 'Available only in Telegram';
+    console.log("shareScore called with score:", score, "platform:", window.Telegram?.WebApp?.platform);
+
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        const platform = window.Telegram.WebApp.platform || 'unknown';
+        const isWebPlatform = ['web', 'weba', 'webk'].includes(platform);
+        
+        // If it's a web platform, we already know it probably won't support switchInlineQuery reliably
+        if (isWebPlatform) {
+            console.log("Prevented switchInlineQuery on web platform:", platform);
+            showToast(msg, 'warning');
+            return;
+        }
+
+        // Check if isSupported exists (added in later versions)
+        if (window.Telegram.WebApp.isSupported) {
+            if (!window.Telegram.WebApp.isSupported('switchInlineQuery')) {
+                console.log("switchInlineQuery not supported according to isSupported()");
+                showToast(msg, 'warning');
+                return;
+            }
+        }
+
         try {
             const params = new URLSearchParams(window.location.search);
             const seed = params.get('seed') || 'random';
@@ -603,20 +625,16 @@ function shareScore(score) {
             // Format: score <score> <seed>
             const query = `score ${score} ${seed}`;
 
-            console.log("Switching to inline query with:", query);
-
-            // This opens the chat selection menu to share the result
+            console.log("Calling switchInlineQuery with:", query);
             window.Telegram.WebApp.switchInlineQuery(query, ['users', 'groups', 'channels']);
         } catch (e) {
-            console.error("switchInlineQuery failed:", e);
-            const msg = getText('featureTelegramOnly', selectedLang);
+            // We catch EVERYTHING here to ensure no library error leaks to the user
+            console.warn("Caught Telegram WebApp error during share:", e);
             showToast(msg, 'warning');
-            alert(msg);
         }
     } else {
-        const msg = getText('featureTelegramOnly', selectedLang);
+        console.log("No Telegram initData found, showing fallback message.");
         showToast(msg, "warning");
-        alert(msg);
     }
 }
 

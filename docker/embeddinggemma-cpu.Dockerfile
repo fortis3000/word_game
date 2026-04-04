@@ -9,7 +9,7 @@ COPY pyproject.toml uv.lock ./
 COPY src/ /app/src/
 COPY configs/ /app/configs/
 
-RUN uv venv && . .venv/bin/activate && uv sync --extra embedding
+RUN uv venv && . .venv/bin/activate && uv pip install -e .[embedding] --torch-backend cpu
 
 # Expose the port
 EXPOSE 8000

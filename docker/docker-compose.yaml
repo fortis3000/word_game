@@ -52,8 +52,8 @@ services:
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000
     volumes:
       - ../data:/app/data
-      - ../src/:app/src
-      - ../configs/:app/configs
+      - ../src:/app/src
+      - ../configs:/app/configs
     command: [ "uv", "run", "python", "-m", "src.telegram_bot" ]
 
   prometheus:

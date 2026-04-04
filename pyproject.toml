@@ -59,3 +59,6 @@ omit = ["/tmp/*"]
 
 [tool.coverage.report]
 ignore_errors = true
+
+[tool.pymarkdown.plugins]
+MD013 = { enabled = false }

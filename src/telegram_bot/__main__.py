@@ -64,7 +64,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Message text
-    msg = "Welcome to the Word Context Game! 🎮\n\nClick the button below to start playing."
+    msg = "Welcome to the Word Similarity Game! 🎮\n\nClick the button below to start playing."
     if context.args:
         msg = "Welcome to the PvP Challenge! ⚔️\n\nClick below to accept the duel."
 

@@ -24,7 +24,7 @@ async def test_start_command():
     call_args = update.message.reply_text.call_args
 
     # Check text
-    assert "Welcome to the Word Context Game!" in call_args[0][0]
+    assert "Welcome to the Word Similarity Game!" in call_args[0][0]
 
     # Check reply_markup
     reply_markup = call_args[1]["reply_markup"]

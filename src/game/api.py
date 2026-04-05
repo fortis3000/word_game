@@ -271,6 +271,28 @@ async def shuffle_words(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/game/{session_id}/pause")
+async def pause_game(session_id: str):
+    manager: GameManager = app.state.game_manager
+    if session_id not in manager.games:
+        raise HTTPException(status_code=404, detail="Game session not found")
+
+    game = manager.games[session_id]
+    game.pause()
+    return {"status": "paused"}
+
+
+@app.post("/api/game/{session_id}/resume")
+async def resume_game(session_id: str):
+    manager: GameManager = app.state.game_manager
+    if session_id not in manager.games:
+        raise HTTPException(status_code=404, detail="Game session not found")
+
+    game = manager.games[session_id]
+    game.resume()
+    return {"status": "resumed"}
+
+
 @app.post("/api/game/{session_id}/stop")
 async def stop_game(session_id: str):
     manager: GameManager = app.state.game_manager

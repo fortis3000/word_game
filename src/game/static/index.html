@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Similarity Game</title>
-    <link rel="stylesheet" href="/css/style.css?v=4">
+    <link rel="stylesheet" href="/css/style.css?v=5">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -15,7 +15,7 @@
         <!-- Content same as above -->
         <main id="start-screen" class="screen-center">
             <header>
-                <h1 id="main-title">Word Context Game</h1>
+                <h1 id="main-title">Word Similarity Game</h1>
             </header>
 
             <div class="menu-actions column" style="margin-bottom: 2rem;">
@@ -28,22 +28,23 @@
                 <h3 id="tutorial-title" class="tutorial-title">Guess a word that has a similar meaning</h3>
             </div>
 
-            <div class="tutorial-wrapper">
+            <!-- <div class="tutorial-wrapper">
                 <img id="tutorial-img" src="/img/tutorial_analogy.png" alt="Word Analogy Tutorial" class="tutorial-img">
-            </div>
+            </div> -->
 
             <div class="menu-actions">
                 <button id="start-btn" class="primary-btn large-btn hidden">Start Game</button>
+                <button id="how-to-play-btn" class="secondary-btn large-btn hidden">How to Play</button>
             </div>
         </main>
 
         <main id="game-area" class="hidden">
             <header class="game-header">
-                <h2 id="game-title">Word Context Game</h2>
+                <h2 id="game-title">Word Similarity Game</h2>
                 <div class="header-actions">
                     <button id="shuffle-btn" class="secondary-btn small-btn" title="Shuffle Words (Cost: 200)">🔄
                         200</button>
-                    <button id="hint-btn" class="secondary-btn small-btn" title="Hint">ℹ️</button>
+                    <button id="info-btn" class="secondary-btn small-btn" title="Info">ℹ️</button>
                     <button id="quit-btn" class="text-btn">Quit</button>
                 </div>
             </header>
@@ -122,9 +123,36 @@
             </div>
         </main>
 
+        <div id="how-to-play-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <button id="close-modal-btn" class="close-btn">&times;</button>
+                <h2 id="how-to-play-title">How to Play</h2>
+                <p id="how-to-play-intro">Welcome to the Word Similarity Game! Your goal is to clear the
+                    board by finding hidden connections between words.</p>
+                <h3 id="how-to-play-rules-header"
+                    style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">The Rules:</h3>
+                <ul class="rules-list">
+                    <li id="how-to-play-rule1"><strong>Match Words:</strong> Type a word or a short sentence that
+                        relates to one or more words currently on the screen. The closer the meaning, the better the
+                        match!</li>
+                    <li id="how-to-play-rule2"><strong>Score Points:</strong> You earn points for every successful
+                        match. Matching multiple words at once with a clever phrase gives you a massive combo bonus!
+                    </li>
+                    <li id="how-to-play-rule3"><strong>Beat the Clock:</strong> Keep an eye on the timer. Every matched
+                        word adds +2 seconds to your clock! Clear as many words as you can before time runs out to
+                        secure a high score.</li>
+                    <li id="how-to-play-rule4"><strong>Use Shuffle:</strong> Stuck? Use the Shuffle button to rearrange
+                        the words and spot new connections.</li>
+                    <li id="how-to-play-rule5"></li>
+                </ul>
+                <p id="how-to-play-outro">Ready to test your vocabulary and associative thinking? <strong>Play now and
+                        see how high you can score!</strong></p>
+            </div>
+        </div>
+
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js?v=13"></script>
+    <script src="/js/app.js?v=14"></script>
 </body>
 
 </html>

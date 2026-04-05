@@ -42,6 +42,9 @@ class WordManager:
         # Time management
         self.start_time: float | None = None
         self.bonus_time: float = 0
+        self.is_paused: bool = False
+        self.pause_start_time: float | None = None
+        self.total_paused_time: float = 0.0
 
         logger.info(
             f"WordManager initialized with {len(all_words)} words, target count: {target_words_count}, lives: {initial_lives}"
@@ -80,6 +83,9 @@ class WordManager:
         # Start timer
         self.start_time = time.time()
         self.bonus_time = 0
+        self.is_paused = False
+        self.pause_start_time = None
+        self.total_paused_time = 0.0
 
         logger.info(
             f"Game initialized with seed={seed}, words: {self.get_current_words()} (IDs: {list(self.current_words)})"
@@ -97,8 +103,28 @@ class WordManager:
             return self.GAME_DURATION
 
         elapsed = time.time() - self.start_time
+        if self.is_paused and self.pause_start_time:
+            elapsed -= time.time() - self.pause_start_time
+
+        elapsed -= self.total_paused_time
         remaining = self.GAME_DURATION + self.bonus_time - elapsed
         return max(0.0, remaining)
+
+    def pause_game(self) -> None:
+        """Pause the game timer."""
+        if not self.is_paused:
+            self.is_paused = True
+            self.pause_start_time = time.time()
+            logger.info("Game paused.")
+
+    def resume_game(self) -> None:
+        """Resume the game timer."""
+        if self.is_paused:
+            self.is_paused = False
+            if self.pause_start_time:
+                self.total_paused_time += time.time() - self.pause_start_time
+                self.pause_start_time = None
+            logger.info("Game resumed.")
 
     def process_guess(
         self, similarities: List[float], threshold: float = 0.5, max_remove: int = 3
@@ -330,6 +356,14 @@ class WordGame:
             time_remaining=self.manager.get_time_remaining(),
             game_over=self.manager.is_game_over(),
         )
+
+    def pause(self) -> None:
+        """Pause the game."""
+        self.manager.pause_game()
+
+    def resume(self) -> None:
+        """Resume the game."""
+        self.manager.resume_game()
 
 
 async def main():

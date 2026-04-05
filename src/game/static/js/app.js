@@ -11,11 +11,14 @@ const summaryScoreEl = document.getElementById('summary-score');
 const summaryWordsFoundEl = document.getElementById('summary-words-found');
 const wordInput = document.getElementById('word-input');
 const startBtn = document.getElementById('start-btn');
+const howToPlayBtn = document.getElementById('how-to-play-btn');
+const howToPlayModal = document.getElementById('how-to-play-modal');
+const closeModalBtn = document.getElementById('close-modal-btn');
 const quitBtn = document.getElementById('quit-btn');
 const restartBtn = document.getElementById('restart-btn');
 const backToMenuBtn = document.getElementById('back-to-menu-btn');
 const submitBtn = document.getElementById('submit-btn');
-const hintBtn = document.getElementById('hint-btn');
+const infoBtn = document.getElementById('info-btn');
 const shuffleBtn = document.getElementById('shuffle-btn');
 const shareScoreBtnGameover = document.getElementById('share-score-btn-gameover');
 const shareScoreBtnSummary = document.getElementById('share-score-btn-summary');
@@ -52,12 +55,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     startBtn.addEventListener('click', startGame);
+    howToPlayBtn.addEventListener('click', openHowToPlay);
+    closeModalBtn.addEventListener('click', closeHowToPlay);
+    howToPlayModal.addEventListener('click', (e) => {
+        if (e.target === howToPlayModal) {
+            closeHowToPlay();
+        }
+    });
     restartBtn.addEventListener('click', startGame);
     backToMenuBtn.addEventListener('click', showMainMenu);
     summaryBackBtn.addEventListener('click', showMainMenu);
     quitBtn.addEventListener('click', quitGame);
     submitBtn.addEventListener('click', submitWord);
-    hintBtn.addEventListener('click', showHint);
+    infoBtn.addEventListener('click', showInfo);
 
     console.log("Checking for shuffle button:", shuffleBtn);
     if (shuffleBtn) {
@@ -119,13 +129,23 @@ document.addEventListener('DOMContentLoaded', () => {
 const TRANSLATIONS = {
     'en': {
         startBtn: "Start Game",
+        howToPlayBtn: "How to Play",
+        howToPlayTitle: "How to Play",
+        howToPlayIntro: "Welcome to the Word Similarity Game! Your goal is to clear the board by finding hidden connections between words.",
+        howToPlayRulesHeader: "The Rules:",
+        howToPlayRule1: "<strong>Match Words:</strong> Type a word or a short sentence that relates to one or more words currently on the screen. The closer the meaning, the better the match!",
+        howToPlayRule2: "<strong>Score Points:</strong> You earn points for every successful match. Matching several words at once with a clever phrase gives you a big combo bonus!",
+        howToPlayRule3: "<strong>Beat the Clock:</strong> Keep an eye on the timer. Every matched word adds +2 seconds to your clock! Clear as many words as you can before time runs out to secure a high score.",
+        howToPlayRule4: "<strong>Use Shuffle 🔄:</strong> Stuck? Use the Shuffle button to rearrange the words and spot new associations.",
+        howToPlayRule5: "<strong>Info ℹ️:</strong> Tap the Info button to review these rules again at any time during the game.",
+        howToPlayOutro: "Ready to test your vocabulary and associative thinking? <strong>Play now and see how high you can score!</strong>",
         tutorialTitle: "Guess a word that has a similar meaning",
         tutorialImg: "/img/tutorial_analogy.png",
         placeholder: "Type a word close to one or several on the screen...",
         submitBtn: "Submit",
         contextHeader: "Current Context",
-        mainTitle: "Word Context Game",
-        gameTitle: "Word Context Game",
+        mainTitle: "Word Similarity Game",
+        gameTitle: "Word Similarity Game",
         lives: "Lives",
         time: "Time",
         score: "Score",
@@ -150,7 +170,7 @@ const TRANSLATIONS = {
         gameStarted: "Game Started! Good Luck!",
         hintToast: "Type words that are semantically similar to the displayed words!",
         shuffleTooltip: "Shuffle Words (Cost: 200)",
-        hintTooltip: "Hint",
+        infoTooltip: "Info",
         featureTelegramOnly: "Available only in Telegram",
         typeWordWarning: "Please type a word!",
         wordOnScreenWarning: "Word is already on screen!",
@@ -162,13 +182,23 @@ const TRANSLATIONS = {
     },
     'de': {
         startBtn: "Spiel Starten",
+        howToPlayBtn: "Spielanleitung",
+        howToPlayTitle: "Spielanleitung",
+        howToPlayIntro: "Willkommen bei Word Similarity Game! Dein Ziel ist es, das Spielfeld zu leeren, indem du versteckte Verbindungen zwischen Wörtern findest.",
+        howToPlayRulesHeader: "Die Regeln:",
+        howToPlayRule1: "<strong>Wörter kombinieren:</strong> Tippe ein Wort oder einen kurzen Satz ein, der sich auf eines oder mehrere Wörter auf dem Bildschirm bezieht. Je enger die Bedeutung, desto besser der Treffer!",
+        howToPlayRule2: "<strong>Punkte sammeln:</strong> Du erhältst Punkte für jeden erfolgreichen Treffer. Wenn du mehrere Wörter gleichzeitig mit einem geschickten Begriff kombinierst, erhältst du einen großen Combo-Bonus!",
+        howToPlayRule3: "<strong>Gegen die Zeit:</strong> Behalte den Timer im Auge. Jedes gefundene Wort fügt deiner Zeit +2 Sekunden hinzu! Leere so viele Wörter wie möglich, bevor die Zeit abläuft.",
+        howToPlayRule4: "<strong>Mischen 🔄 benutzen:</strong> Kommst du nicht weiter? Nutze die Mischen-Taste, um die Wörter neu anzuordnen und neue Assoziationen zu entdecken.",
+        howToPlayRule5: "<strong>Info ℹ️:</strong> Tippe auf die Info-Taste, um diese Regeln jederzeit während des Spiels erneut zu lesen.",
+        howToPlayOutro: "Bereit, deinen Wortschatz und dein assoziatives Denken zu testen? <strong>Spiele jetzt und knacke den Highscore!</strong>",
         tutorialTitle: "Errate ein Wort, das eine ähnliche Bedeutung hat",
         tutorialImg: "/img/tutorial_analogy_de.png",
         placeholder: "Tippe ein Wort ein, das einem oder mehreren auf dem Schirm ähnelt...",
         submitBtn: "Senden",
         contextHeader: "Aktueller Kontext",
-        mainTitle: "Word Context Game",
-        gameTitle: "Word Context Game",
+        mainTitle: "Word Similarity Game",
+        gameTitle: "Word Similarity Game",
         lives: "Leben",
         time: "Zeit",
         score: "Punkte",
@@ -193,7 +223,7 @@ const TRANSLATIONS = {
         gameStarted: "Spiel gestartet! Viel Erfolg!",
         hintToast: "Tippe Wörter ein, die den angezeigten Wörtern inhaltlich ähnlich sind!",
         shuffleTooltip: "Wörter mischen (Kosten: 200)",
-        hintTooltip: "Hinweis",
+        infoTooltip: "Info",
         featureTelegramOnly: "Nur in Telegram verfügbar",
         typeWordWarning: "Bitte tippe ein Wort ein!",
         wordOnScreenWarning: "Wort ist bereits auf dem Bildschirm!",
@@ -205,13 +235,23 @@ const TRANSLATIONS = {
     },
     'ru': {
         startBtn: "Начать игру",
+        howToPlayBtn: "Как играть",
+        howToPlayTitle: "Как играть",
+        howToPlayIntro: "Добро пожаловать в Word Similarity Game! Ваша цель — очистить поле, находя скрытые связи между словами.",
+        howToPlayRulesHeader: "Правила:",
+        howToPlayRule1: "<strong>Ищите ассоциации:</strong> Введите слово или короткую фразу, которая относится к одному или нескольким словам на экране. Чем ближе смысл, тем лучше результат!",
+        howToPlayRule2: "<strong>Набирайте очки:</strong> Вы получаете очки за каждое угаданное слово. Объединяя сразу несколько слов одной фразой, вы получите большой комбо-бонус!",
+        howToPlayRule3: "<strong>Следите за временем:</strong> Каждое угаданное слово добавляет +2 секунды к вашему времени! Постарайтесь убрать как можно больше слов, пока время не вышло.",
+        howToPlayRule4: "<strong>Перемешивание 🔄:</strong> Застряли? Используйте кнопку перемешивания, чтобы взглянуть на слова под другим углом и найти новые связи.",
+        howToPlayRule5: "<strong>Инфо ℹ️:</strong> Нажмите на кнопку Инфо, чтобы просмотреть эти правила в любое время во время игры.",
+        howToPlayOutro: "Готовы проверить свой словарный запас и ассоциативное мышление? <strong>Начните игру и узнайте, сколько очков вы сможете набрать!</strong>",
         tutorialTitle: "Угадайте слово, которое имеет похожее значение",
         tutorialImg: "/img/tutorial_analogy_ru.png",
         placeholder: "Введите слово, близкое к одному или нескольким на экране...",
         submitBtn: "Отправить",
         contextHeader: "Текущий контекст",
-        mainTitle: "Word Context Game",
-        gameTitle: "Word Context Game",
+        mainTitle: "Word Similarity Game",
+        gameTitle: "Word Similarity Game",
         lives: "Жизни",
         time: "Время",
         score: "Очки",
@@ -236,7 +276,7 @@ const TRANSLATIONS = {
         gameStarted: "Игра началась! Удачи!",
         hintToast: "Вводите слова, которые по смыслу похожи на отображаемые!",
         shuffleTooltip: "Перемешать слова (Цена: 200)",
-        hintTooltip: "Подсказка",
+        infoTooltip: "Инфо",
         featureTelegramOnly: "Доступно только в Telegram",
         typeWordWarning: "Пожалуйста, введите слово!",
         wordOnScreenWarning: "Слово уже на экране!",
@@ -267,6 +307,7 @@ function selectLanguage(lang, btn) {
 
     // Show start button and instruction
     startBtn.classList.remove('hidden');
+    howToPlayBtn.classList.remove('hidden');
 
     updateStaticText(selectedLang);
 }
@@ -274,6 +315,7 @@ function selectLanguage(lang, btn) {
 function updateStaticText(lang) {
     // Main Screen
     startBtn.textContent = getText('startBtn', lang);
+    howToPlayBtn.textContent = getText('howToPlayBtn', lang);
 
     // Tutorial
     updateTextContent('tutorial-title', getText('tutorialTitle', lang));
@@ -285,6 +327,17 @@ function updateStaticText(lang) {
     if (document.getElementById('main-title')) {
         document.getElementById('main-title').textContent = getText('mainTitle', lang);
     }
+
+    // How to Play Modal
+    updateTextContent('how-to-play-title', getText('howToPlayTitle', lang));
+    updateTextContent('how-to-play-intro', getText('howToPlayIntro', lang));
+    updateTextContent('how-to-play-rules-header', getText('howToPlayRulesHeader', lang));
+    updateHTMLContent('how-to-play-rule1', getText('howToPlayRule1', lang));
+    updateHTMLContent('how-to-play-rule2', getText('howToPlayRule2', lang));
+    updateHTMLContent('how-to-play-rule3', getText('howToPlayRule3', lang));
+    updateHTMLContent('how-to-play-rule4', getText('howToPlayRule4', lang));
+    updateHTMLContent('how-to-play-rule5', getText('howToPlayRule5', lang));
+    updateHTMLContent('how-to-play-outro', getText('howToPlayOutro', lang));
 
     // Game Area
     if (document.getElementById('game-title')) {
@@ -319,7 +372,7 @@ function updateStaticText(lang) {
 
     // Tooltips
     if (shuffleBtn) shuffleBtn.title = getText('shuffleTooltip', lang);
-    if (hintBtn) hintBtn.title = getText('hintTooltip', lang);
+    if (infoBtn) infoBtn.title = getText('infoTooltip', lang);
 
     // Document Title
     document.title = getText('gameTitle', lang);
@@ -328,6 +381,11 @@ function updateStaticText(lang) {
 function updateTextContent(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+}
+
+function updateHTMLContent(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
 }
 
 function showMainMenu() {
@@ -347,8 +405,32 @@ function showMainMenu() {
     });
 }
 
-function showHint() {
-    showToast(getText('hintToast', selectedLang), 'info');
+async function openHowToPlay() {
+    howToPlayModal.classList.remove('hidden');
+    if (sessionId) {
+        stopTimer(); // Pause client-side timer
+        try {
+            await fetch(`${API_BASE}/${sessionId}/pause`, { method: 'POST' });
+        } catch (e) {
+            console.warn('Could not pause game server-side', e);
+        }
+    }
+}
+
+async function closeHowToPlay() {
+    howToPlayModal.classList.add('hidden');
+    if (sessionId) {
+        startTimer(); // Resume client-side timer
+        try {
+            await fetch(`${API_BASE}/${sessionId}/resume`, { method: 'POST' });
+        } catch (e) {
+            console.warn('Could not resume game server-side', e);
+        }
+    }
+}
+
+function showInfo() {
+    openHowToPlay();
 }
 
 async function shuffleWords() {
@@ -601,7 +683,7 @@ function shareScore(score) {
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
         const platform = window.Telegram.WebApp.platform || 'unknown';
         const isWebPlatform = ['web', 'weba', 'webk'].includes(platform);
-        
+
         // If it's a web platform, we already know it probably won't support switchInlineQuery reliably
         if (isWebPlatform) {
             console.log("Prevented switchInlineQuery on web platform:", platform);

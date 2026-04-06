@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class WordManager:
     """Manages the game state and word selection."""
 
-    GAME_DURATION = 180  # 3 minutes in seconds
+    GAME_DURATION = 120  # 2 minutes in seconds
     BONUS_TIME = 2  # Seconds added per correct guess
 
     def __init__(

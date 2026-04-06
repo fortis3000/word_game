@@ -10,7 +10,7 @@ SIMILARITY_SCORE = 0.85
 DISSIMILARITY_SCORE = 0.65
 HTTP_OK = 200
 NUM_EMBEDDINGS_LIST = 2
-EMBEDDING_DIMENSION = 768
+EMBEDDING_DIMENSION = 1024
 
 
 @pytest.fixture
@@ -100,7 +100,7 @@ def test_create_embedding_single_string(test_client):
     assert response.status_code == HTTP_OK
     data = response.json()
     assert data["object"] == "list"
-    assert data["model"] == "embeddinggemma-300m"
+    assert data["model"] == "harrier-oss-v1-0.6b"
     assert len(data["data"]) == 1
     assert data["data"][0]["object"] == "embedding"
     assert len(data["data"][0]["embedding"]) == EMBEDDING_DIMENSION
@@ -120,7 +120,7 @@ def test_create_embedding_list_of_strings(test_client, word_list):
     assert response.status_code == HTTP_OK
     data = response.json()
     assert data["object"] == "list"
-    assert data["model"] == "embeddinggemma-300m"
+    assert data["model"] == "harrier-oss-v1-0.6b"
     assert len(data["data"]) == len(word_list)
     for i in range(len(word_list)):
         assert data["data"][i]["object"] == "embedding"

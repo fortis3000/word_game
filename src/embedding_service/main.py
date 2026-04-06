@@ -20,7 +20,7 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-EMBEDDING_DIM = 768
+EMBEDDING_DIM = 1024
 
 
 class EmbeddingService:
@@ -32,7 +32,7 @@ class EmbeddingService:
 
     async def load_model(self):
         """Load the Gemma model."""
-        model_name = "google/embeddinggemma-300M"  # "tencent/KaLM-Embedding-Gemma3-12B-2511"  # "ibm-granite/granite-embedding-278m-multilingual"  # "all-MiniLM-L6-v2"  # "google/embeddinggemma-300M"
+        model_name = "microsoft/harrier-oss-v1-0.6b"  # "tencent/KaLM-Embedding-Gemma3-12B-2511"  # "ibm-granite/granite-embedding-278m-multilingual"  # "all-MiniLM-L6-v2"  # "google/embeddinggemma-300M"
         model_path = os.getenv("MODEL_PATH", model_name)
         logger.info(f"Attempting to load model from: {model_path}")
 
@@ -81,8 +81,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Embedding Gemma API",
-    description="A FastAPI service providing text embeddings using the Gemma model",
+    title="Embedding Harrier API",
+    description="A FastAPI service providing text embeddings using the Harrier model",
     version="1.0.0",
     lifespan=lifespan,
 )

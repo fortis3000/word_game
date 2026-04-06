@@ -91,7 +91,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/embeddinggemma-cpu.Dockerfile
+          file: ./docker/harrier-cpu.Dockerfile
           push: false
 
       - name: Build telegram bot image

@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     infoBtn.addEventListener('click', showInfo);
 
     wordInput.addEventListener('input', () => {
-        if (wordInput.value.trim().length > 0) {
+        if (isValidInput(wordInput.value)) {
             submitBtn.classList.add('visible');
         } else {
             submitBtn.classList.remove('visible');
@@ -582,9 +582,9 @@ function showError() {
 }
 
 async function submitWord() {
-    const word = wordInput.value.trim();
+    const word = wordInput.value;
 
-    if (!word) {
+    if (!isValidInput(word)) {
         showError();
         wordInput.focus();
         return;
@@ -773,4 +773,25 @@ function stopTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
     }
+}
+
+function isValidInput(text) {
+    if (!text) return false;
+    
+    // Split by non-letters (works for English, Russian, German)
+    const words = text.match(/\p{L}+/gu) || [];
+    if (words.length === 0) return false;
+
+    // Rule: At least one word must have length > 2 and unique letters >= 2
+    let hasValidWord = false;
+    for (const word of words) {
+        if (word.length > 2) {
+            const uniqueLetters = new Set(word.toLowerCase());
+            if (uniqueLetters.size >= 2) {
+                hasValidWord = true;
+                break;
+            }
+        }
+    }
+    return hasValidWord;
 }

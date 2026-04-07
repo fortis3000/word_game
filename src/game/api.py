@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from src.game.main import WordGame, WordManager, GameState
@@ -33,7 +33,7 @@ class StartGameResponse(BaseModel):
 
 
 class PlayRequest(BaseModel):
-    word: str
+    word: str = Field(..., min_length=1, max_length=100)
 
 
 # Session Manager
@@ -234,11 +234,14 @@ async def play_round(session_id: str, request_data: PlayRequest, request: Reques
     game = manager.games[session_id]
 
     try:
+        # Ensure consistent case-insensitive handling
+        processed_word = request_data.word.strip().lower()
+
         # Track word submission metrics and log the word itself
         game_words_submitted_total.labels(client_type=client_type).inc()
-        logger.info("Word submitted", extra={"word": request_data.word, "client_type": client_type})
+        logger.info("Word submitted", extra={"word": processed_word, "client_type": client_type})
 
-        game_state = await game.play_round(request_data.word)
+        game_state = await game.play_round(processed_word)
         return game_state
     except ValueError as e:
         logger.warning(f"Invalid move: {e}")

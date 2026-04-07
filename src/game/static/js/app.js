@@ -23,6 +23,9 @@ const shuffleBtn = document.getElementById('shuffle-btn');
 const shareScoreBtnGameover = document.getElementById('share-score-btn-gameover');
 const shareScoreBtnSummary = document.getElementById('share-score-btn-summary');
 
+const countdownOverlay = document.getElementById('countdown-overlay');
+const countdownText = document.getElementById('countdown-text');
+
 // Language Buttons
 const langBtns = document.querySelectorAll('.lang-btn');
 
@@ -68,6 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
     quitBtn.addEventListener('click', quitGame);
     submitBtn.addEventListener('click', submitWord);
     infoBtn.addEventListener('click', showInfo);
+
+    wordInput.addEventListener('input', () => {
+        if (wordInput.value.trim().length > 0) {
+            submitBtn.classList.add('visible');
+        } else {
+            submitBtn.classList.remove('visible');
+        }
+    });
 
     console.log("Checking for shuffle button:", shuffleBtn);
     if (shuffleBtn) {
@@ -142,7 +153,6 @@ const TRANSLATIONS = {
         tutorialTitle: "Guess a word that has a similar meaning",
         tutorialImg: "/img/tutorial_analogy.png",
         placeholder: "Type a word close to one or several on the screen...",
-        submitBtn: "Submit",
         contextHeader: "Current Context",
         mainTitle: "Word Similarity Game",
         gameTitle: "Word Similarity Game",
@@ -160,8 +170,7 @@ const TRANSLATIONS = {
         playAgain: "Play Again",
         shareScore: "Share Score 🏆",
         mainMenu: "Main Menu",
-        sessionEnded: "Session Ended",
-        summaryMsg: "Good effort! Here is how you did:",
+        sessionEnded: "Good Effort!",
         totalScore: "Total Score",
         wordsFound: "Words Found",
         backToMenu: "Back to Menu",
@@ -178,7 +187,8 @@ const TRANSLATIONS = {
         submitError: "Error submitting word. Please try again.",
         startError: "Could not start game. Please try again.",
         selectLangWarning: "Please select a language first!",
-        stopError: "Error stopping game session."
+        stopError: "Error stopping game session.",
+        countdownLabel: "Game starts in"
     },
     'de': {
         startBtn: "Spiel Starten",
@@ -195,7 +205,6 @@ const TRANSLATIONS = {
         tutorialTitle: "Errate ein Wort, das eine ähnliche Bedeutung hat",
         tutorialImg: "/img/tutorial_analogy_de.png",
         placeholder: "Tippe ein Wort ein, das einem oder mehreren auf dem Schirm ähnelt...",
-        submitBtn: "Senden",
         contextHeader: "Aktueller Kontext",
         mainTitle: "Word Similarity Game",
         gameTitle: "Word Similarity Game",
@@ -213,8 +222,7 @@ const TRANSLATIONS = {
         playAgain: "Nochmal spielen",
         shareScore: "Ergebnis teilen 🏆",
         mainMenu: "Hauptmenü",
-        sessionEnded: "Sitzung beendet",
-        summaryMsg: "Guter Versuch! Hier ist dein Ergebnis:",
+        sessionEnded: "Guter Versuch",
         totalScore: "Gesamtpunktzahl",
         wordsFound: "Gefundene Wörter",
         backToMenu: "Zurück zum Menü",
@@ -231,7 +239,8 @@ const TRANSLATIONS = {
         submitError: "Fehler beim Senden des Wortes. Bitte versuche es erneut.",
         startError: "Spiel konnte nicht gestartet werden. Bitte versuche es erneut.",
         selectLangWarning: "Bitte wähle zuerst eine Sprache!",
-        stopError: "Fehler beim Beenden der Spielsitzung."
+        stopError: "Fehler beim Beenden der Spielsitzung.",
+        countdownLabel: "Spiel beginnt in"
     },
     'ru': {
         startBtn: "Начать игру",
@@ -248,7 +257,6 @@ const TRANSLATIONS = {
         tutorialTitle: "Угадайте слово, которое имеет похожее значение",
         tutorialImg: "/img/tutorial_analogy_ru.png",
         placeholder: "Введите слово, близкое к одному или нескольким на экране...",
-        submitBtn: "Отправить",
         contextHeader: "Текущий контекст",
         mainTitle: "Word Similarity Game",
         gameTitle: "Word Similarity Game",
@@ -266,8 +274,7 @@ const TRANSLATIONS = {
         playAgain: "Играть снова",
         shareScore: "Поделиться 🏆",
         mainMenu: "Главное меню",
-        sessionEnded: "Сессия завершена",
-        summaryMsg: "Хорошая попытка! Вот ваши результаты:",
+        sessionEnded: "Хорошая попытка",
         totalScore: "Общий счет",
         wordsFound: "Найденные слова",
         backToMenu: "Назад в меню",
@@ -284,7 +291,8 @@ const TRANSLATIONS = {
         submitError: "Ошибка отправки слова. Попробуйте еще раз.",
         startError: "Не удалось начать игру. Попробуйте еще раз.",
         selectLangWarning: "Пожалуйста, выберите язык!",
-        stopError: "Ошибка завершения сессии."
+        stopError: "Ошибка завершения сессии.",
+        countdownLabel: "Игра начнется через"
     }
 };
 
@@ -352,15 +360,12 @@ function updateStaticText(lang) {
 
     // buttons
     wordInput.placeholder = getText('placeholder', lang);
-    submitBtn.textContent = getText('submitBtn', lang);
-    quitBtn.textContent = getText('quit', lang);
 
     // Game Over / Summary Static
     updateTextContent('final-score-label', getText('finalScore', lang));
     updateTextContent('summary-score-label', getText('totalScore', lang));
     updateTextContent('words-found-label', getText('wordsFound', lang));
     updateTextContent('summary-title', getText('sessionEnded', lang));
-    updateTextContent('summary-msg', getText('summaryMsg', lang));
 
     // Action Buttons
     restartBtn.textContent = getText('playAgain', lang);
@@ -376,6 +381,9 @@ function updateStaticText(lang) {
 
     // Document Title
     document.title = getText('gameTitle', lang);
+
+    // Countdown
+    updateTextContent('countdown-label', getText('countdownLabel', lang));
 }
 
 function updateTextContent(id, text) {
@@ -435,8 +443,8 @@ function showInfo() {
 
 async function shuffleWords() {
     console.log("shuffleWords called. SessionId:", sessionId);
-    if (!sessionId) {
-        console.warn("No session ID, cannot shuffle.");
+    if (!sessionId || shuffleBtn.disabled) {
+        console.warn("Cannot shuffle: No session or disabled.");
         return;
     }
 
@@ -450,8 +458,6 @@ async function shuffleWords() {
         });
 
         if (response.status === 400) {
-            // Not enough points
-            showToast(getText('shuffleCost', selectedLang), 'warning');
             return;
         }
 
@@ -459,12 +465,8 @@ async function shuffleWords() {
 
         const gameState = await response.json();
         updateUI(gameState);
-
-        showToast(getText('shuffleSuccess', selectedLang), 'success');
-
     } catch (error) {
         console.error('Error shuffling words:', error);
-        showToast('Error shuffling words.', 'error');
     }
 }
 
@@ -474,34 +476,47 @@ async function startGame() {
         return;
     }
 
-    try {
-        const params = new URLSearchParams(window.location.search);
-        const seed = params.get('seed');
+    countdownOverlay.classList.remove('hidden');
+    let count = 3;
+    countdownText.textContent = count;
 
-        let url = `${API_BASE}/start?lang=${selectedLang}`;
-        if (seed) {
-            url += `&seed=${seed}`;
+    const countInterval = setInterval(async () => {
+        count--;
+        if (count > 0) {
+            countdownText.textContent = count;
+        } else {
+            clearInterval(countInterval);
+            countdownOverlay.classList.add('hidden');
+
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const seed = params.get('seed');
+
+                let url = `${API_BASE}/start?lang=${selectedLang}`;
+                if (seed) {
+                    url += `&seed=${seed}`;
+                }
+
+                const response = await fetch(url, { method: 'POST' });
+                if (!response.ok) throw new Error('Failed to start game');
+
+                const data = await response.json();
+                sessionId = data.session_id;
+
+                // Reset UI
+                wordInput.value = '';
+                submitBtn.classList.remove('visible');
+
+                updateUI(data.game_state);
+
+                showGameArea();
+                wordInput.focus();
+            } catch (error) {
+                console.error('Error starting game:', error);
+                showToast(getText('startError', selectedLang), 'warning');
+            }
         }
-
-        const response = await fetch(url, { method: 'POST' });
-        if (!response.ok) throw new Error('Failed to start game');
-
-        const data = await response.json();
-        sessionId = data.session_id;
-
-        // Reset UI
-        wordInput.value = '';
-
-        updateUI(data.game_state);
-
-        showGameArea();
-        wordInput.focus();
-
-        showToast(getText('gameStarted', selectedLang), 'info');
-    } catch (error) {
-        console.error('Error starting game:', error);
-        showToast(getText('startError', selectedLang), 'warning');
-    }
+    }, 1000);
 }
 
 async function quitGame() {
@@ -545,11 +560,18 @@ function showGameArea() {
     gameArea.classList.remove('hidden');
 }
 
+function showError() {
+    wordInput.classList.add('input-error', 'shake');
+    setTimeout(() => {
+        wordInput.classList.remove('input-error', 'shake');
+    }, 500);
+}
+
 async function submitWord() {
     const word = wordInput.value.trim();
 
     if (!word) {
-        showToast(getText('typeWordWarning', selectedLang), 'warning');
+        showError();
         wordInput.focus();
         return;
     }
@@ -564,13 +586,9 @@ async function submitWord() {
         });
 
         if (response.status === 400) {
-            const errData = await response.json();
-            if (errData.detail && (errData.detail.includes("too similar") || errData.detail.includes("already on screen"))) {
-                showToast(getText('wordOnScreenWarning', selectedLang), 'warning');
-            } else {
-                showToast(errData.detail || getText('invalidMoveWarning', selectedLang), 'warning');
-            }
+            showError();
             wordInput.value = '';
+            submitBtn.classList.remove('visible');
             wordInput.focus();
             return;
         }
@@ -582,15 +600,12 @@ async function submitWord() {
 
         updateUI(gameState);
         wordInput.value = '';
+        submitBtn.classList.remove('visible');
         wordInput.focus();
 
         // Feedback Messages
         if (removedCount === 0) {
-            showToast('Good try, but no match.', 'info');
-        } else if (removedCount === 1) {
-            showToast('Great! You found one!', 'success');
-        } else {
-            showToast(`Amazing! Multi-hit combo: ${removedCount} words!`, 'success');
+            showError();
         }
 
         if (gameState.game_over) {
@@ -599,7 +614,6 @@ async function submitWord() {
 
     } catch (error) {
         console.error('Error submitting word:', error);
-        showToast(getText('submitError', selectedLang), 'warning');
     }
 }
 
@@ -653,6 +667,10 @@ function updateUI(state) {
         livesHeart.style.setProperty('--fill-percent', `${percentage}%`);
         livesCount.textContent = `x${currentLives}`;
     }
+
+    if (shuffleBtn) {
+        shuffleBtn.disabled = state.total_score < 200;
+    }
 }
 
 function handleGameOver(state) {
@@ -662,17 +680,13 @@ function handleGameOver(state) {
     finalScoreEl.textContent = state.total_score;
 
     const gameOverTitle = gameOverScreen.querySelector('h2');
-    const gameOverMsg = gameOverScreen.querySelector('p');
 
     if (state.lives <= 0) {
-        if (gameOverTitle) gameOverTitle.textContent = getText('gameOverTitle', selectedLang);
-        if (gameOverMsg) gameOverMsg.textContent = getText('outOfLivesMsg', selectedLang);
+        if (gameOverTitle) gameOverTitle.textContent = getText('outOfLivesMsg', selectedLang);
     } else if (state.time_remaining !== undefined && state.time_remaining <= 0) {
-        if (gameOverTitle) gameOverTitle.textContent = getText('timeUpTitle', selectedLang);
-        if (gameOverMsg) gameOverMsg.textContent = getText('scoreMsg', selectedLang).replace('{score}', state.total_score);
+        if (gameOverTitle) gameOverTitle.textContent = getText('scoreMsg', selectedLang).replace('{score}', state.total_score);
     } else {
-        if (gameOverTitle) gameOverTitle.textContent = getText('wonTitle', selectedLang);
-        if (gameOverMsg) gameOverMsg.textContent = getText('wonMsg', selectedLang);
+        if (gameOverTitle) gameOverTitle.textContent = getText('wonMsg', selectedLang);
     }
 }
 

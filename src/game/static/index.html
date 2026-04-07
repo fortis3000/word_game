@@ -39,17 +39,10 @@
         </main>
 
         <main id="game-area" class="hidden">
-            <header class="game-header">
-                <h2 id="game-title">Word Similarity Game</h2>
-                <div class="header-actions">
-                    <button id="shuffle-btn" class="secondary-btn small-btn" title="Shuffle Words (Cost: 200)">🔄
-                        200</button>
-                    <button id="info-btn" class="secondary-btn small-btn" title="Info">ℹ️</button>
-                    <button id="quit-btn" class="text-btn">Quit</button>
-                </div>
-            </header>
-
-            <div class="score-board">
+            <button id="quit-btn" class="icon-btn" title="Quit" style="position: absolute; top: 1rem; right: 1rem; z-index: 10;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            </button>
+            <div class="game-top-bar score-board">
                 <div class="score-item">
                     <span class="label" id="lives-label">Lives</span>
                     <div class="lives-wrapper">
@@ -79,20 +72,40 @@
                 </div>
             </div>
 
-            <div class="input-area">
-                <input type="text" id="word-input" placeholder="Type a word close to one or several on the screen..."
-                    autocomplete="off">
-                <button id="submit-btn" class="primary-btn">Submit</button>
-            </div>
-
-            <div class="feedback-area">
-                <!-- Removed list removed per user request -->
+            <div class="game-bottom-area">
+                <div class="input-area">
+                    <button id="shuffle-btn" class="icon-btn" title="Shuffle Words (Cost: 200)" style="flex-shrink: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.1rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" x2="21" y1="20" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" x2="21" y1="15" y2="21"/><line x1="4" x2="9" y1="4" y2="9"/></svg>
+                            <span style="font-size: 0.7rem; font-weight: 600;">200</span>
+                        </div>
+                    </button>
+                    <div class="word-input-container">
+                        <input type="text" id="word-input" placeholder="Type a word close to one or several on the screen..."
+                            autocomplete="off" enterkeyhint="send">
+                        <button id="submit-btn" class="icon-btn submit-inside-btn" title="Submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </div>
+                    <button id="info-btn" class="icon-btn" title="Info" style="flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                    </button>
+                </div>
+                <div class="feedback-area">
+                    <!-- Removed list removed per user request -->
+                </div>
             </div>
         </main>
 
+        <div id="countdown-overlay" class="countdown-overlay hidden">
+            <div class="countdown-content">
+                <div id="countdown-label" class="countdown-label">Game starts in</div>
+                <span id="countdown-text" class="countdown-text">3</span>
+            </div>
+        </div>
+
         <main id="game-over-screen" class="hidden screen-center">
-            <h2 id="game-over-title">Game Over!</h2>
-            <p id="game-over-msg">You found all the words!</p>
+            <h2 id="game-over-title"></h2>
             <div class="final-score">
                 <span class="label" id="final-score-label">Final Score</span>
                 <span id="final-score" class="value">0</span>
@@ -105,8 +118,7 @@
         </main>
 
         <main id="summary-screen" class="hidden screen-center">
-            <h2 id="summary-title">Session Ended</h2>
-            <p id="summary-msg">Good effort! Here is how you did:</p>
+            <h2 id="summary-title"></h2>
             <div class="final-score">
                 <span class="label" id="summary-score-label">Total Score</span>
                 <span id="summary-score" class="value">0</span>
@@ -152,7 +164,8 @@
 
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js?v=14"></script>
+    <script src="/js/app.js?v=16"></script>
 </body>
 
+</html>
 </html>

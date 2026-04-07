@@ -23,6 +23,10 @@ body {
     color: var(--text-main);
     line-height: 1.6;
     height: var(--app-height, 100dvh);
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -190,7 +194,7 @@ header p {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding-bottom: env(safe-area-inset-bottom, 1rem);
+    padding-bottom: calc(env(safe-area-inset-bottom, 1rem) + 0.5rem);
 }
 
 .bottom-actions {

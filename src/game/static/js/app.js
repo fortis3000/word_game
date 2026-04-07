@@ -50,6 +50,7 @@ function setViewportHeight() {
         vh = window.visualViewport.height;
     }
     document.documentElement.style.setProperty('--app-height', `${vh}px`);
+    window.scrollTo(0, 0);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -166,7 +167,7 @@ const TRANSLATIONS = {
         howToPlayOutro: "Ready to test your vocabulary and associative thinking? <strong>Play now and see how high you can score!</strong>",
         tutorialTitle: "Guess a word that has a similar meaning",
         tutorialImg: "/img/tutorial_analogy.png",
-        placeholder: "Type a word close to one or several on the screen...",
+        placeholder: "Type a related word...",
         contextHeader: "Current Context",
         mainTitle: "Word Similarity Game",
         gameTitle: "Word Similarity Game",
@@ -218,7 +219,7 @@ const TRANSLATIONS = {
         howToPlayOutro: "Bereit, deinen Wortschatz und dein assoziatives Denken zu testen? <strong>Spiele jetzt und knacke den Highscore!</strong>",
         tutorialTitle: "Errate ein Wort, das eine ähnliche Bedeutung hat",
         tutorialImg: "/img/tutorial_analogy_de.png",
-        placeholder: "Tippe ein Wort ein, das einem oder mehreren auf dem Schirm ähnelt...",
+        placeholder: "Tippe ein ähnliches Wort ein...",
         contextHeader: "Aktueller Kontext",
         mainTitle: "Word Similarity Game",
         gameTitle: "Word Similarity Game",
@@ -236,7 +237,7 @@ const TRANSLATIONS = {
         playAgain: "Nochmal spielen",
         shareScore: "Ergebnis teilen 🏆",
         mainMenu: "Hauptmenü",
-        sessionEnded: "Guter Versuch",
+        sessionEnded: "Guter Versuch!",
         totalScore: "Gesamtpunktzahl",
         wordsFound: "Gefundene Wörter",
         backToMenu: "Zurück zum Menü",
@@ -270,7 +271,7 @@ const TRANSLATIONS = {
         howToPlayOutro: "Готовы проверить свой словарный запас и ассоциативное мышление? <strong>Начните игру и узнайте, сколько очков вы сможете набрать!</strong>",
         tutorialTitle: "Угадайте слово, которое имеет похожее значение",
         tutorialImg: "/img/tutorial_analogy_ru.png",
-        placeholder: "Введите слово, близкое к одному или нескольким на экране...",
+        placeholder: "Введите похожее слово...",
         contextHeader: "Текущий контекст",
         mainTitle: "Word Similarity Game",
         gameTitle: "Word Similarity Game",
@@ -288,7 +289,7 @@ const TRANSLATIONS = {
         playAgain: "Играть снова",
         shareScore: "Поделиться 🏆",
         mainMenu: "Главное меню",
-        sessionEnded: "Хорошая попытка",
+        sessionEnded: "Хорошая попытка!",
         totalScore: "Общий счет",
         wordsFound: "Найденные слова",
         backToMenu: "Назад в меню",
@@ -777,7 +778,7 @@ function stopTimer() {
 
 function isValidInput(text) {
     if (!text) return false;
-    
+
     // Split by non-letters (works for English, Russian, German)
     const words = text.match(/\p{L}+/gu) || [];
     if (words.length === 0) return false;

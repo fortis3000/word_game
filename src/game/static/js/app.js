@@ -44,8 +44,22 @@ let timerInterval = null;
 let currentTimeRemaining = 0;
 
 // Init
+function setViewportHeight() {
+    let vh = window.innerHeight;
+    if (window.visualViewport) {
+        vh = window.visualViewport.height;
+    }
+    document.documentElement.style.setProperty('--app-height', `${vh}px`);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App initialized");
+    setViewportHeight();
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', setViewportHeight);
+    }
+    window.addEventListener('resize', setViewportHeight);
+
     timeRemainingEl = document.getElementById('time-remaining');
     const langBtns = document.querySelectorAll('.lang-btn');
     console.log("Found lang buttons:", langBtns.length);

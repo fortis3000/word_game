@@ -357,7 +357,7 @@ function selectLanguage(lang, btn) {
 function updateStaticText(lang) {
     // Main Screen
     startBtn.textContent = getText('startBtn', lang);
-    howToPlayBtn.textContent = getText('howToPlayBtn', lang);
+    howToPlayBtn.title = getText('howToPlayBtn', lang);
 
     // Tutorial
     updateTextContent('tutorial-title', getText('tutorialTitle', lang));

@@ -11,6 +11,7 @@ const summaryScoreEl = document.getElementById('summary-score');
 const summaryWordsFoundEl = document.getElementById('summary-words-found');
 const wordInput = document.getElementById('word-input');
 const startBtn = document.getElementById('start-btn');
+const startActions = document.getElementById('start-actions');
 const howToPlayBtn = document.getElementById('how-to-play-btn');
 const howToPlayModal = document.getElementById('how-to-play-modal');
 const closeModalBtn = document.getElementById('close-modal-btn');
@@ -348,8 +349,7 @@ function selectLanguage(lang, btn) {
     btn.style.opacity = '1';
 
     // Show start button and instruction
-    startBtn.classList.remove('hidden');
-    howToPlayBtn.classList.remove('hidden');
+    startActions.classList.remove('hidden');
 
     updateStaticText(selectedLang);
 }
@@ -440,7 +440,7 @@ function showMainMenu() {
     // Reset selection state mostly for UI cleanliness, but keeping selectedLang if they just paused is fine.
     // If we want to force re-selection:
     selectedLang = null;
-    startBtn.classList.add('hidden');
+    startActions.classList.add('hidden');
     langBtns.forEach(b => {
         b.style.border = 'none';
         b.style.opacity = '1';

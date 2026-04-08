@@ -207,10 +207,12 @@ header p {
 .score-board {
     display: flex;
     justify-content: space-around;
-    margin-bottom: 2rem;
+    align-items: center;
+    margin-bottom: 1rem;
     background: var(--card-bg);
-    padding: 1rem;
+    padding: 0.75rem 0.5rem;
     border-radius: 0.5rem;
+    gap: 0.25rem;
 }
 
 .score-item {
@@ -278,7 +280,7 @@ header p {
 }
 
 .current-words {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     text-align: center;
 }
 
@@ -286,8 +288,8 @@ header p {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.5rem;
+    margin-top: 0;
 }
 
 .word-tag {
@@ -424,6 +426,22 @@ input[type="text"]:focus {
     gap: 1rem;
 }
 
+/* Start screen: center the Start button, info icon sits to its left */
+.start-actions {
+    margin-top: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+}
+
+.start-actions #how-to-play-btn {
+    position: absolute;
+    /* Anchor to the left of the centered start button */
+    right: calc(50% + 7rem);
+}
+
 .menu-actions.column {
     flex-direction: column;
     width: 100%;
@@ -453,9 +471,9 @@ input[type="text"]:focus {
 
 .word-item {
     background: rgba(30, 41, 59, 0.6);
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 9999px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-secondary);
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
@@ -770,30 +788,37 @@ input[type="text"]:focus {
         display: flex;
         flex-direction: row;
         justify-content: space-evenly;
-        /* Even spacing */
+        align-items: center;
         gap: 0;
-        /* Remove gap to ensure fit */
         padding: 0.25rem;
-        /* Minimal padding */
         flex-wrap: nowrap;
-        /* Force single row */
+    }
+
+    .score-board #quit-btn {
+        flex: 0 0 auto;
     }
 
     .score-item {
         margin-bottom: 0;
         flex: 1;
         padding: 0 2px;
-        /* Minimal internal padding */
     }
 
     .score-item .value {
         font-size: 1.1rem;
-        /* Smaller font to fit */
     }
 
     .score-item .label {
         font-size: 0.7rem;
-        /* Smaller labels */
+    }
+
+    .word-cloud {
+        gap: 0.4rem;
+    }
+
+    .word-item {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
     }
 
     .input-area {

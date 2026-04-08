@@ -473,7 +473,7 @@ input[type="text"]:focus {
     background: rgba(30, 41, 59, 0.6);
     padding: 0.5rem 1rem;
     border-radius: 9999px;
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: var(--text-secondary);
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
@@ -817,8 +817,8 @@ input[type="text"]:focus {
     }
 
     .word-item {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.9rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.95rem;
     }
 
     .input-area {

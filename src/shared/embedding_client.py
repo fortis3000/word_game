@@ -28,7 +28,7 @@ class EmbeddingClient:
         request_payload = {
             "text1": user_word,
             "text2": target_words,
-            "model": "embeddinggemma-300m",
+            "model": "harrier-oss-v1-0.6b",
             "encoding_format": "float",
         }
         logger.info(

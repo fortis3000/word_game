@@ -55,7 +55,7 @@ async def test_get_similarities_success(embedding_client):
                 json={
                     "text1": "word1",
                     "text2": ["word2", "word3"],
-                    "model": "embeddinggemma-300m",
+                    "model": "harrier-oss-v1-0.6b",
                     "encoding_format": "float",
                 },
                 timeout=TEST_TIMEOUT,

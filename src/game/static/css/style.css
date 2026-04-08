@@ -808,13 +808,8 @@ input[type="text"]:focus {
         padding: 0.5rem;
     }
 
-    /* Stack buttons in menus if needed */
-    .menu-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .menu-actions button {
+    /* Ensure stacked columns span the whole screen width on mobile */
+    .menu-actions.column button {
         width: 100%;
     }
 

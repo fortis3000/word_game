@@ -313,7 +313,8 @@ input[type="text"] {
     padding: 1rem;
     padding-right: 3rem;
     border-radius: 0.5rem;
-    font-size: 1.1rem;
+    /* Ensure iOS doesn't zoom in on focus by making the font at least 16px */
+    font-size: max(16px, 1.1rem);
     font-family: var(--font-main);
     transition: border-color 0.2s;
     width: 100%;

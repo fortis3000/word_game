@@ -46,18 +46,37 @@ let currentTimeRemaining = 0;
 // Init
 function setViewportHeight() {
     let vh = window.innerHeight;
-    if (window.visualViewport) {
+    let offsetTop = 0;
+    let offsetLeft = 0;
+    
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportStableHeight) {
+        vh = window.Telegram.WebApp.viewportStableHeight;
+    } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportHeight) {
+        vh = window.Telegram.WebApp.viewportHeight;
+    } else if (window.visualViewport) {
         vh = window.visualViewport.height;
+        offsetTop = window.visualViewport.offsetTop;
+        offsetLeft = window.visualViewport.offsetLeft;
     }
+    
     document.documentElement.style.setProperty('--app-height', `${vh}px`);
-    window.scrollTo(0, 0);
+    document.body.style.top = `${offsetTop}px`;
+    document.body.style.left = `${offsetLeft}px`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App initialized");
+    
+    // Telegram WebApp specific initializations
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.expand();
+        window.Telegram.WebApp.onEvent('viewportChanged', setViewportHeight);
+    }
+    
     setViewportHeight();
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setViewportHeight);
+        window.visualViewport.addEventListener('scroll', setViewportHeight);
     }
     window.addEventListener('resize', setViewportHeight);
 

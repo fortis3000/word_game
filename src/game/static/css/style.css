@@ -186,7 +186,10 @@ header p {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-bottom-area {
@@ -280,8 +283,9 @@ header p {
 }
 
 .current-words {
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     text-align: center;
+    width: 100%;
 }
 
 .word-cloud {
@@ -471,9 +475,9 @@ input[type="text"]:focus {
 
 .word-item {
     background: rgba(51, 65, 85, 0.7);
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.1rem;
     border-radius: 9999px;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     color: var(--text-secondary);
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;

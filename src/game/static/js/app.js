@@ -169,6 +169,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!autoStarted) {
         showMainMenu();
     }
+
+    // Desktop zoom hint (show once)
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice && window.innerWidth > 768 && !localStorage.getItem('zoomHintShown')) {
+        setTimeout(() => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const key = isMac ? '⌘' : 'Ctrl';
+            showToast(`💡 Tip: Use ${key} + / ${key} − to scale the game to your liking`, 'info');
+            localStorage.setItem('zoomHintShown', '1');
+        }, 1500);
+    }
 });
 
 // Translations

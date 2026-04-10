@@ -110,6 +110,23 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def cache_control_middleware(request: Request, call_next):
+    """Set cache headers: no-cache for HTML, long-cache for hashed assets."""
+    response = await call_next(request)
+    path = request.url.path
+
+    if path.endswith(".html") or path == "/" or "." not in path.split("/")[-1]:
+        # HTML pages: always revalidate (ensures fresh hashed asset URLs)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    elif "?h=" in str(request.url):
+        # Hashed assets (CSS/JS with ?h=<hash>): cache for 1 year
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+
+    return response
+
+
 # Prometheus metrics endpoint
 security = HTTPBasic()
 

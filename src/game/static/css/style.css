@@ -24,6 +24,7 @@
 html {
     height: 100%;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 
 body {
@@ -34,12 +35,16 @@ body {
     height: 100dvh;
     height: var(--app-height, 100dvh);
     width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
     overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     padding: 1rem;
-    /* No position:fixed — let iOS manage viewport naturally */
 }
 
 .container {

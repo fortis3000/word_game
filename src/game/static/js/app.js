@@ -43,9 +43,15 @@ const toastContainer = document.getElementById('toast-container');
 let timerInterval = null;
 let currentTimeRemaining = 0;
 
-// Init
+// Init — iOS viewport management
+// On iOS Safari, opening the keyboard doesn't resize the layout viewport.
+// We use position:fixed on body + visualViewport API to:
+// 1. Set body height to the visible area (--app-height)
+// 2. Offset body.top to follow the visual viewport when keyboard pushes it
+// 3. Force window.scrollTo(0,0) to prevent iOS from scrolling the page
 function setViewportHeight() {
     let vh = window.innerHeight;
+    let offsetTop = 0;
     
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportStableHeight) {
         vh = window.Telegram.WebApp.viewportStableHeight;
@@ -53,9 +59,14 @@ function setViewportHeight() {
         vh = window.Telegram.WebApp.viewportHeight;
     } else if (window.visualViewport) {
         vh = window.visualViewport.height;
+        offsetTop = window.visualViewport.offsetTop;
     }
     
     document.documentElement.style.setProperty('--app-height', `${vh}px`);
+    document.body.style.top = `${offsetTop}px`;
+    
+    // Force scroll reset — iOS Safari may scroll the page despite position:fixed
+    window.scrollTo(0, 0);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -69,14 +80,18 @@ document.addEventListener('DOMContentLoaded', () => {
     setViewportHeight();
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setViewportHeight);
+        window.visualViewport.addEventListener('scroll', setViewportHeight);
     }
     window.addEventListener('resize', setViewportHeight);
 
-    // iOS keyboard: scroll input into view when focused
-    wordInput.addEventListener('focus', () => {
+    // iOS keyboard: reset any accidental page scroll when input gains focus.
+    // Do NOT use scrollIntoView — it causes the exact bug we're fixing
+    // (iOS scrolls the entire fixed-position page off-screen).
+    // Instead, after the keyboard animation settles, force scroll to origin.
+    wordInput.addEventListener('focusin', () => {
         setTimeout(() => {
-            wordInput.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }, 300);
+            window.scrollTo(0, 0);
+        }, 400);
     });
 
     langBtns.forEach(btn => {

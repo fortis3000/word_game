@@ -3,11 +3,15 @@
     --card-bg: #1e293b;
     --primary: #3b82f6;
     --primary-hover: #2563eb;
+    --primary-purple: #8b5cf6;
     --secondary: #64748b;
     --accent: #f43f5e;
+    --accent-light: #fca5a5;
     --text-main: #f8fafc;
+    --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
     --success: #22d3ee;
+    --word-bg: rgba(51, 65, 85, 0.7);
     --font-main: 'Outfit', sans-serif;
 }
 
@@ -17,21 +21,25 @@
     padding: 0;
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     font-family: var(--font-main);
     background-color: var(--bg-color);
     color: var(--text-main);
     line-height: 1.6;
+    height: 100dvh;
     height: var(--app-height, 100dvh);
     width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
     overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     padding: 1rem;
+    /* No position:fixed — let iOS manage viewport naturally */
 }
 
 .container {
@@ -56,7 +64,7 @@ header {
 header h1 {
     font-size: 2.5rem;
     font-weight: 600;
-    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    background: linear-gradient(to right, #60a5fa, var(--primary-purple));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -71,18 +79,7 @@ header p {
     display: none !important;
 }
 
-#instruction-text {
-    margin: 1.5rem 0;
-    padding: 1.25rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0.75rem;
-    border-left: 3px solid var(--primary);
-    text-align: left;
-    font-size: 1.1rem;
-    color: var(--text-main);
-    line-height: 1.4;
-    max-width: 100%;
-}
+
 
 /* Start Screen */
 #start-screen,
@@ -94,38 +91,10 @@ header p {
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-.tutorial-wrapper {
-    margin: 1rem 0 2rem;
-    text-align: center;
-}
 
-.tutorial-img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.tutorial-title {
-    font-size: 1.4rem;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-}
-
-.tutorial-desc {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    margin-top: 0.5rem;
-    max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.4;
-}
 
 .primary-btn {
-    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    background: linear-gradient(135deg, var(--primary), var(--primary-purple));
     color: white;
     border: none;
     padding: 1rem 2rem;
@@ -200,12 +169,7 @@ header p {
     padding-bottom: calc(env(safe-area-inset-bottom, 1rem) + 0.5rem);
 }
 
-.bottom-actions {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    gap: 0.5rem;
-}
+
 
 .score-board {
     display: flex;
@@ -296,15 +260,7 @@ header p {
     margin-top: 0;
 }
 
-.word-tag {
-    background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    font-size: 1.1rem;
-    animation: fadeIn 0.5s ease-out;
-}
+
 
 .input-area {
     display: flex;
@@ -392,28 +348,7 @@ input[type="text"]:focus {
     padding-bottom: 0.5rem;
 }
 
-.word-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
 
-.removed-item,
-.added-item {
-    font-size: 0.9rem;
-    padding: 0.25rem 0;
-    animation: slideIn 0.3s ease-out;
-}
-
-.removed-item {
-    color: var(--accent);
-    text-decoration: line-through;
-    opacity: 0.7;
-}
-
-.added-item {
-    color: var(--success);
-}
 
 /* Main Menu & Screen Transitions */
 .screen-center {
@@ -462,11 +397,7 @@ input[type="text"]:focus {
     align-items: center;
 }
 
-.small-btn {
-    padding: 0.5rem 1rem;
-    font-size: 1.2rem;
-    line-height: 1;
-}
+
 
 .large-btn {
     padding: 1.25rem 3rem;
@@ -474,7 +405,7 @@ input[type="text"]:focus {
 }
 
 .word-item {
-    background: rgba(51, 65, 85, 0.7);
+    background: var(--word-bg);
     padding: 0.5rem 1.1rem;
     border-radius: 9999px;
     font-size: 1.25rem;
@@ -489,7 +420,7 @@ input[type="text"]:focus {
 .word-item.removed {
     background: transparent;
     border: 1px solid rgba(220, 38, 38, 0.1);
-    color: #fca5a5;
+    color: var(--accent-light);
     opacity: 0.7;
 }
 
@@ -545,21 +476,7 @@ input[type="text"]:focus {
     border-color: var(--text-main);
 }
 
-.text-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    cursor: pointer;
-    text-decoration: underline;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
 
-.text-btn:hover {
-    opacity: 1;
-    color: var(--accent);
-}
 
 .final-score {
     margin: 2rem 0;
@@ -676,7 +593,7 @@ input[type="text"]:focus {
 }
 
 .modal-content strong {
-    color: #a78bfa;
+    color: var(--primary-purple);
     /* Slightly distinct color for emphasis */
 }
 

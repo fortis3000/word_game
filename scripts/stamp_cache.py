@@ -16,6 +16,7 @@ INDEX_FILE = STATIC_DIR / "index.html"
 FILES_TO_HASH = {
     "__CSS_HASH__": STATIC_DIR / "css" / "style.css",
     "__JS_HASH__": STATIC_DIR / "js" / "app.js",
+    "__TRANSLATIONS_HASH__": STATIC_DIR / "js" / "translations.js",
 }
 
 

@@ -44,14 +44,16 @@ let timerInterval = null;
 let currentTimeRemaining = 0;
 
 // Init — iOS viewport management
-// On iOS Safari, opening the keyboard doesn't resize the layout viewport.
-// We use position:fixed on body + visualViewport API to:
-// 1. Set body height to the visible area (--app-height)
-// 2. Offset body.top to follow the visual viewport when keyboard pushes it
-// 3. Force window.scrollTo(0,0) to prevent iOS from scrolling the page
+// On iOS Safari, the keyboard does NOT resize the layout viewport.
+// position:fixed elements are anchored to the layout viewport, NOT the visual viewport.
+// iOS scrolls the layout viewport upward to show the focused input — this causes
+// the fixed body to scroll out of view. Our defense:
+// 1. Size body to visualViewport.height so content fits above keyboard
+// 2. NEVER set body.top (it would push content down, not up)
+// 3. Prevent page scrolling via touchmove and scroll listeners
+// 4. Force window.scrollTo(0,0) constantly to fight iOS's native scroll
 function setViewportHeight() {
     let vh = window.innerHeight;
-    let offsetTop = 0;
     
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportStableHeight) {
         vh = window.Telegram.WebApp.viewportStableHeight;
@@ -59,14 +61,14 @@ function setViewportHeight() {
         vh = window.Telegram.WebApp.viewportHeight;
     } else if (window.visualViewport) {
         vh = window.visualViewport.height;
-        offsetTop = window.visualViewport.offsetTop;
     }
     
     document.documentElement.style.setProperty('--app-height', `${vh}px`);
-    document.body.style.top = `${offsetTop}px`;
     
-    // Force scroll reset — iOS Safari may scroll the page despite position:fixed
+    // Aggressively reset scroll — iOS may have scrolled the page to show the input
     window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -80,18 +82,39 @@ document.addEventListener('DOMContentLoaded', () => {
     setViewportHeight();
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setViewportHeight);
-        window.visualViewport.addEventListener('scroll', setViewportHeight);
+        window.visualViewport.addEventListener('scroll', () => {
+            // When iOS scrolls the visual viewport (keyboard opening), fight it
+            window.scrollTo(0, 0);
+        });
     }
     window.addEventListener('resize', setViewportHeight);
+    
+    // Block ALL page-level scrolling.
+    // The words-container has overflow-y:auto for its own scrolling.
+    // But the page itself should never scroll.
+    document.addEventListener('touchmove', (e) => {
+        // Allow scrolling inside .words-container, block everything else
+        if (!e.target.closest('.words-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Catch any scroll that sneaks through
+    window.addEventListener('scroll', () => {
+        window.scrollTo(0, 0);
+    });
 
-    // iOS keyboard: reset any accidental page scroll when input gains focus.
-    // Do NOT use scrollIntoView — it causes the exact bug we're fixing
-    // (iOS scrolls the entire fixed-position page off-screen).
-    // Instead, after the keyboard animation settles, force scroll to origin.
+    // When input gets focus, iOS will try to scroll. Fight it after keyboard settles.
     wordInput.addEventListener('focusin', () => {
         setTimeout(() => {
             window.scrollTo(0, 0);
-        }, 400);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }, 100);
+        // Second pass after keyboard animation completes
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 500);
     });
 
     langBtns.forEach(btn => {

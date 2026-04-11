@@ -63,12 +63,16 @@ function setViewportHeight() {
         vh = window.visualViewport.height;
     }
     
-    document.documentElement.style.setProperty('--app-height', `${vh}px`);
-    
-    // Aggressively reset scroll — iOS may have scrolled the page to show the input
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Only apply the height logic if the modal is NOT open, 
+    // to prevent background shifting while scrolling the info popup.
+    if (!document.body.classList.contains('modal-open')) {
+        document.documentElement.style.setProperty('--app-height', `${vh}px`);
+        
+        // Aggressively reset scroll
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -84,7 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.visualViewport.addEventListener('resize', setViewportHeight);
         window.visualViewport.addEventListener('scroll', () => {
             // When iOS scrolls the visual viewport (keyboard opening), fight it
-            window.scrollTo(0, 0);
+            if (!document.body.classList.contains('modal-open')) {
+                window.scrollTo(0, 0);
+            }
         });
     }
     window.addEventListener('resize', setViewportHeight);
@@ -99,7 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Catch any scroll that sneaks through
     window.addEventListener('scroll', () => {
-        window.scrollTo(0, 0);
+        if (!document.body.classList.contains('modal-open')) {
+            window.scrollTo(0, 0);
+        }
     });
 
     // When input gets focus, iOS will try to scroll. Fight it after keyboard settles.
@@ -318,6 +326,7 @@ function showMainMenu() {
 
 async function openHowToPlay() {
     howToPlayModal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
     if (sessionId) {
         stopTimer(); // Pause client-side timer
         try {
@@ -330,6 +339,7 @@ async function openHowToPlay() {
 
 async function closeHowToPlay() {
     howToPlayModal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
     if (sessionId) {
         startTimer(); // Resume client-side timer
         try {

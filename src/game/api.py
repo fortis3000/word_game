@@ -23,6 +23,7 @@ from src.game.metrics import (
     game_errors_total,
     game_words_submitted_total,
 )
+from scripts import stamp_cache
 
 logger = get_logger(__name__)
 
@@ -81,6 +82,12 @@ class GameManager:
 # Application Lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Automatically stamp cache hashes on startup/reload
+    try:
+        stamp_cache.main()
+    except Exception as e:
+        logger.error(f"Failed to stamp cache: {e}")
+
     # Initialize shared resources
     logger.info("Initializing Game API...")
     game_manager = GameManager()

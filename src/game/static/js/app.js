@@ -54,22 +54,25 @@ let currentTimeRemaining = 0;
 // 3. Prevent page scrolling via touchmove and scroll listeners
 // 4. Force window.scrollTo(0,0) constantly to fight iOS's native scroll
 function setViewportHeight() {
-    let vh = window.innerHeight;
-    
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportStableHeight) {
-        vh = window.Telegram.WebApp.viewportStableHeight;
-    } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportHeight) {
-        vh = window.Telegram.WebApp.viewportHeight;
-    } else if (window.visualViewport) {
-        vh = window.visualViewport.height;
-    }
-    
-    document.documentElement.style.setProperty('--app-height', `${vh}px`);
-    
-    // Aggressively reset scroll
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    requestAnimationFrame(() => {
+        let vh = window.innerHeight;
+        
+        // Use the smallest available height to ensure we don't go under the keyboard
+        if (window.visualViewport) {
+            vh = window.visualViewport.height;
+        }
+        
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportHeight) {
+            vh = Math.min(vh, window.Telegram.WebApp.viewportHeight);
+        }
+        
+        document.documentElement.style.setProperty('--app-height', `${vh}px`);
+        
+        // Aggressively reset scroll to keep the app anchored at the top
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Word Similarity Game</title>
-    <link rel="stylesheet" href="/css/style.css?h=__CSS_HASH__">
+    <link rel="stylesheet" href="/css/style.css?h=e7b8845b">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -167,36 +167,27 @@
 
 
 
-        <div id="toast-container"></div>
-    </div>
-    <div id="how-to-play-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button id="close-modal-btn" class="close-btn">&times;</button>
-            <h2 id="how-to-play-title">How to Play</h2>
-            <p id="how-to-play-intro">Welcome to the Word Similarity Game! Your goal is to clear the
-                board by finding hidden connections between words.</p>
-            <h3 id="how-to-play-rules-header" style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">The
-                Rules:</h3>
+        <main id="how-to-play-screen" class="hidden scrollable-screen">
+            <h2 id="how-to-play-title" tabindex="-1">How to Play</h2>
+            <p id="how-to-play-intro"></p>
+            <h3 id="how-to-play-rules-header"></h3>
             <ul class="rules-list">
-                <li id="how-to-play-rule1"><strong>Match Words:</strong> Type a word or a short sentence that
-                    relates to one or more words currently on the screen. The closer the meaning, the better the
-                    match!</li>
-                <li id="how-to-play-rule2"><strong>Score Points:</strong> You earn points for every successful
-                    match. Matching multiple words at once with a clever phrase gives you a massive combo bonus!
-                </li>
-                <li id="how-to-play-rule3"><strong>Beat the Clock:</strong> Keep an eye on the timer. Every matched
-                    word adds +2 seconds to your clock! Clear as many words as you can before time runs out to
-                    secure a high score.</li>
-                <li id="how-to-play-rule4"><strong>Use Shuffle:</strong> Stuck? Use the Shuffle button to rearrange
-                    the words and spot new connections.</li>
+                <li id="how-to-play-rule1"></li>
+                <li id="how-to-play-rule2"></li>
+                <li id="how-to-play-rule3"></li>
+                <li id="how-to-play-rule4"></li>
                 <li id="how-to-play-rule5"></li>
             </ul>
-            <p id="how-to-play-outro">Ready to test your vocabulary and associative thinking? <strong>Play now and
-                    see how high you can score!</strong></p>
-        </div>
+            <p id="how-to-play-outro"></p>
+            <div class="menu-actions">
+                <button id="close-instructions-btn" class="primary-btn">Back</button>
+            </div>
+        </main>
+
+        <div id="toast-container"></div>
     </div>
-    <script src="/js/translations.js?h=__TRANSLATIONS_HASH__"></script>
-    <script src="/js/app.js?h=__JS_HASH__"></script>
+    <script src="/js/translations.js?h=7ec019b1"></script>
+    <script src="/js/app.js?h=233ab6a0"></script>
 </body>
 
 </html>

@@ -13,8 +13,9 @@ const wordInput = document.getElementById('word-input');
 const startBtn = document.getElementById('start-btn');
 const startActions = document.getElementById('start-actions');
 const howToPlayBtn = document.getElementById('how-to-play-btn');
-const howToPlayModal = document.getElementById('how-to-play-modal');
-const closeModalBtn = document.getElementById('close-modal-btn');
+const howToPlayScreen = document.getElementById('how-to-play-screen');
+const closeInstructionsBtn = document.getElementById('close-instructions-btn');
+let previousActiveScreen = null;
 const quitBtn = document.getElementById('quit-btn');
 const restartBtn = document.getElementById('restart-btn');
 const backToMenuBtn = document.getElementById('back-to-menu-btn');
@@ -63,16 +64,12 @@ function setViewportHeight() {
         vh = window.visualViewport.height;
     }
     
-    // Only apply the height logic if the modal is NOT open, 
-    // to prevent background shifting while scrolling the info popup.
-    if (!document.body.classList.contains('modal-open')) {
-        document.documentElement.style.setProperty('--app-height', `${vh}px`);
-        
-        // Aggressively reset scroll
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    }
+    document.documentElement.style.setProperty('--app-height', `${vh}px`);
+    
+    // Aggressively reset scroll
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -88,9 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.visualViewport.addEventListener('resize', setViewportHeight);
         window.visualViewport.addEventListener('scroll', () => {
             // When iOS scrolls the visual viewport (keyboard opening), fight it
-            if (!document.body.classList.contains('modal-open')) {
-                window.scrollTo(0, 0);
-            }
+            window.scrollTo(0, 0);
         });
     }
     window.addEventListener('resize', setViewportHeight);
@@ -98,16 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Block ALL page-level scrolling.
     // Allow scrolling inside .words-container and .modal-content only.
     document.addEventListener('touchmove', (e) => {
-        if (!e.target.closest('.words-container') && !e.target.closest('.modal-content')) {
+        if (!e.target.closest('.words-container') && !e.target.closest('.scrollable-screen')) {
             e.preventDefault();
         }
     }, { passive: false });
     
     // Catch any scroll that sneaks through
     window.addEventListener('scroll', () => {
-        if (!document.body.classList.contains('modal-open')) {
-            window.scrollTo(0, 0);
-        }
+        window.scrollTo(0, 0);
     });
 
     // When input gets focus, iOS will try to scroll. Fight it after keyboard settles.
@@ -131,12 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startBtn.addEventListener('click', startGame);
     howToPlayBtn.addEventListener('click', openHowToPlay);
-    closeModalBtn.addEventListener('click', closeHowToPlay);
-    howToPlayModal.addEventListener('click', (e) => {
-        if (e.target === howToPlayModal) {
-            closeHowToPlay();
-        }
-    });
+    closeInstructionsBtn.addEventListener('click', closeHowToPlay);
     restartBtn.addEventListener('click', startGame);
     backToMenuBtn.addEventListener('click', showMainMenu);
     summaryBackBtn.addEventListener('click', showMainMenu);
@@ -214,27 +202,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function selectLanguage(lang, btn) {
-    if (!lang) return;
-    selectedLang = lang;
+    try {
+        if (!lang) return;
+        selectedLang = lang;
 
-    // Highlight button
-    langBtns.forEach(b => {
-        b.style.border = 'none';
-        b.style.opacity = '0.7';
-    });
-    btn.style.border = '2px solid var(--accent)';
-    btn.style.opacity = '1';
+        // Highlight button
+        langBtns.forEach(b => {
+            b.style.border = 'none';
+            b.style.opacity = '0.7';
+        });
+        if (btn) {
+            btn.style.border = '2px solid var(--accent)';
+            btn.style.opacity = '1';
+        }
 
-    // Show start button and instruction
-    startActions.classList.remove('hidden');
+        // Show start button and instruction
+        if (startActions) {
+            startActions.classList.remove('hidden');
+        } else {
+            console.error('startActions element not found');
+        }
 
-    updateStaticText(selectedLang);
+        updateStaticText(selectedLang);
+    } catch (e) {
+        console.error('Error in selectLanguage:', e);
+        if (typeof showToast === 'function') {
+            showToast('Error selecting language: ' + e.message, 'error');
+        }
+    }
 }
 
 function updateStaticText(lang) {
     // Main Screen
-    startBtn.textContent = getText('startBtn', lang);
-    howToPlayBtn.title = getText('howToPlayBtn', lang);
+    if (startBtn) startBtn.textContent = getText('startBtn', lang);
+    if (howToPlayBtn) howToPlayBtn.title = getText('howToPlayBtn', lang);
 
     // Tutorial
     updateTextContent('tutorial-title', getText('tutorialTitle', lang));
@@ -304,11 +305,11 @@ function updateHTMLContent(id, html) {
     if (el) el.innerHTML = html;
 }
 
-const ALL_SCREENS = [startScreen, gameArea, gameOverScreen, summaryScreen];
+const ALL_SCREENS = [startScreen, gameArea, gameOverScreen, summaryScreen, howToPlayScreen];
 
 function showScreen(activeEl) {
     ALL_SCREENS.forEach(el => {
-        el.classList.toggle('hidden', el !== activeEl);
+        if (el) el.classList.toggle('hidden', el !== activeEl);
     });
 }
 
@@ -325,9 +326,23 @@ function showMainMenu() {
 }
 
 async function openHowToPlay() {
-    howToPlayModal.classList.remove('hidden');
-    document.body.classList.add('modal-open');
-    if (sessionId) {
+    // Determine the current screen so we can go back
+    previousActiveScreen = ALL_SCREENS.find(el => el && !el.classList.contains('hidden'));
+    
+    // Reset BEFORE showing to fight browser scroll restoration
+    if (howToPlayScreen) {
+        howToPlayScreen.scrollTop = 0;
+    }
+    
+    showScreen(howToPlayScreen);
+    
+    // Force scroll to top
+    if (howToPlayScreen) {
+        howToPlayScreen.scrollTop = 0;
+        howToPlayScreen.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+    
+    if (sessionId && previousActiveScreen === gameArea) {
         stopTimer(); // Pause client-side timer
         try {
             await fetch(`${API_BASE}/${sessionId}/pause`, { method: 'POST' });
@@ -338,9 +353,18 @@ async function openHowToPlay() {
 }
 
 async function closeHowToPlay() {
-    howToPlayModal.classList.add('hidden');
-    document.body.classList.remove('modal-open');
-    if (sessionId) {
+    if (howToPlayScreen) {
+        howToPlayScreen.scrollTop = 0;
+    }
+
+    if (!previousActiveScreen) {
+        showMainMenu();
+        return;
+    }
+
+    showScreen(previousActiveScreen);
+    
+    if (sessionId && previousActiveScreen === gameArea) {
         startTimer(); // Resume client-side timer
         try {
             await fetch(`${API_BASE}/${sessionId}/resume`, { method: 'POST' });
@@ -348,6 +372,8 @@ async function closeHowToPlay() {
             console.warn('Could not resume game server-side', e);
         }
     }
+    
+    previousActiveScreen = null;
 }
 
 

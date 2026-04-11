@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Word Similarity Game</title>
-    <link rel="stylesheet" href="/css/style.css?v=5">
+    <link rel="stylesheet" href="/css/style.css?h=2f84b9cd">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -18,10 +19,10 @@
                 <h1 id="main-title">Word Similarity Game</h1>
             </header>
 
-            <div class="menu-actions column" style="margin-bottom: 2rem;">
-                <button class="primary-btn lang-btn" data-lang="en">English</button>
-                <button class="primary-btn lang-btn" data-lang="de">Deutsch</button>
-                <button class="primary-btn lang-btn" data-lang="ru">Русский</button>
+            <div class="menu-actions" style="margin-bottom: 2rem; justify-content: center; flex-wrap: wrap;">
+                <button class="primary-btn lang-btn" data-lang="en" style="width: auto; margin-bottom: 0;">EN</button>
+                <button class="primary-btn lang-btn" data-lang="de" style="width: auto; margin-bottom: 0;">DE</button>
+                <button class="primary-btn lang-btn" data-lang="ru" style="width: auto; margin-bottom: 0;">РУ</button>
             </div>
 
             <div class="tutorial-wrapper">
@@ -32,16 +33,20 @@
                 <img id="tutorial-img" src="/img/tutorial_analogy.png" alt="Word Analogy Tutorial" class="tutorial-img">
             </div> -->
 
-            <div class="menu-actions">
-                <button id="start-btn" class="primary-btn large-btn hidden">Start Game</button>
-                <button id="how-to-play-btn" class="secondary-btn large-btn hidden">How to Play</button>
+            <div class="start-actions hidden" id="start-actions">
+                <button id="how-to-play-btn" class="icon-btn" title="How to Play" style="width: 3rem; height: 3rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" x2="12.01" y1="17" y2="17" />
+                    </svg>
+                </button>
+                <button id="start-btn" class="primary-btn large-btn">Start Game</button>
             </div>
         </main>
 
         <main id="game-area" class="hidden">
-            <button id="quit-btn" class="icon-btn" title="Quit" style="position: absolute; top: 1rem; right: 1rem; z-index: 10;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-            </button>
             <div class="game-top-bar score-board">
                 <div class="score-item">
                     <span class="label" id="lives-label">Lives</span>
@@ -61,11 +66,19 @@
                         <span id="round-score" class="value-mini"></span>
                     </div>
                 </div>
+                <button id="quit-btn" class="icon-btn" title="Quit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" x2="9" y1="12" y2="12" />
+                    </svg>
+                </button>
             </div>
 
             <div class="words-container">
                 <div class="section current-words">
-                    <h3 id="context-header">Current Context</h3>
+
                     <div id="current-words-list" class="word-cloud">
                         <!-- Words injected here -->
                     </div>
@@ -74,21 +87,38 @@
 
             <div class="game-bottom-area">
                 <div class="input-area">
-                    <button id="shuffle-btn" class="icon-btn" title="Shuffle Words (Cost: 200)" style="flex-shrink: 0;">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.1rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" x2="21" y1="20" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" x2="21" y1="15" y2="21"/><line x1="4" x2="9" y1="4" y2="9"/></svg>
-                            <span style="font-size: 0.7rem; font-weight: 600;">200</span>
-                        </div>
+                    <button id="info-btn" class="icon-btn" title="Info" style="flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" x2="12.01" y1="17" y2="17" />
+                        </svg>
                     </button>
                     <div class="word-input-container">
-                        <input type="text" id="word-input" placeholder="Type a word close to one or several on the screen..."
-                            autocomplete="off" enterkeyhint="send">
+                        <input type="text" id="word-input"
+                            placeholder="Type a word close to one or several on the screen..." autocomplete="off"
+                            enterkeyhint="send">
                         <button id="submit-btn" class="icon-btn submit-inside-btn" title="Submit">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" x2="11" y1="2" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
                         </button>
                     </div>
-                    <button id="info-btn" class="icon-btn" title="Info" style="flex-shrink: 0;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                    <button id="shuffle-btn" class="icon-btn" title="Shuffle Words (Cost: 200)" style="flex-shrink: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.1rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 3 21 3 21 8" />
+                                <line x1="4" x2="21" y1="20" y2="3" />
+                                <polyline points="21 16 21 21 16 21" />
+                                <line x1="15" x2="21" y1="15" y2="21" />
+                                <line x1="4" x2="9" y1="4" y2="9" />
+                            </svg>
+                            <span style="font-size: 0.7rem; font-weight: 600;">200</span>
+                        </div>
                     </button>
                 </div>
                 <div class="feedback-area">
@@ -129,43 +159,35 @@
                     <span id="summary-words-found" class="value-small">0</span>
                 </div>
             </div>
-            <div class="menu-actions">
+            <div class="menu-actions column">
                 <button id="summary-back-btn" class="primary-btn">Back to Menu</button>
                 <button id="share-score-btn-summary" class="secondary-btn">Share Score 🏆</button>
             </div>
         </main>
 
-        <div id="how-to-play-modal" class="modal-overlay hidden">
-            <div class="modal-content">
-                <button id="close-modal-btn" class="close-btn">&times;</button>
-                <h2 id="how-to-play-title">How to Play</h2>
-                <p id="how-to-play-intro">Welcome to the Word Similarity Game! Your goal is to clear the
-                    board by finding hidden connections between words.</p>
-                <h3 id="how-to-play-rules-header"
-                    style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">The Rules:</h3>
-                <ul class="rules-list">
-                    <li id="how-to-play-rule1"><strong>Match Words:</strong> Type a word or a short sentence that
-                        relates to one or more words currently on the screen. The closer the meaning, the better the
-                        match!</li>
-                    <li id="how-to-play-rule2"><strong>Score Points:</strong> You earn points for every successful
-                        match. Matching multiple words at once with a clever phrase gives you a massive combo bonus!
-                    </li>
-                    <li id="how-to-play-rule3"><strong>Beat the Clock:</strong> Keep an eye on the timer. Every matched
-                        word adds +2 seconds to your clock! Clear as many words as you can before time runs out to
-                        secure a high score.</li>
-                    <li id="how-to-play-rule4"><strong>Use Shuffle:</strong> Stuck? Use the Shuffle button to rearrange
-                        the words and spot new connections.</li>
-                    <li id="how-to-play-rule5"></li>
-                </ul>
-                <p id="how-to-play-outro">Ready to test your vocabulary and associative thinking? <strong>Play now and
-                        see how high you can score!</strong></p>
+
+
+        <main id="how-to-play-screen" class="hidden scrollable-screen">
+            <h2 id="how-to-play-title" tabindex="-1">How to Play</h2>
+            <p id="how-to-play-intro"></p>
+            <h3 id="how-to-play-rules-header"></h3>
+            <ul class="rules-list">
+                <li id="how-to-play-rule1"></li>
+                <li id="how-to-play-rule2"></li>
+                <li id="how-to-play-rule3"></li>
+                <li id="how-to-play-rule4"></li>
+                <li id="how-to-play-rule5"></li>
+            </ul>
+            <p id="how-to-play-outro"></p>
+            <div class="menu-actions">
+                <button id="close-instructions-btn" class="primary-btn">Back</button>
             </div>
-        </div>
+        </main>
 
         <div id="toast-container"></div>
     </div>
-    <script src="/js/app.js?v=16"></script>
+    <script src="/js/translations.js?h=7ec019b1"></script>
+    <script src="/js/app.js?h=9b5af74e"></script>
 </body>
 
-</html>
 </html>

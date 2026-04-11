@@ -11,9 +11,11 @@ const summaryScoreEl = document.getElementById('summary-score');
 const summaryWordsFoundEl = document.getElementById('summary-words-found');
 const wordInput = document.getElementById('word-input');
 const startBtn = document.getElementById('start-btn');
+const startActions = document.getElementById('start-actions');
 const howToPlayBtn = document.getElementById('how-to-play-btn');
-const howToPlayModal = document.getElementById('how-to-play-modal');
-const closeModalBtn = document.getElementById('close-modal-btn');
+const howToPlayScreen = document.getElementById('how-to-play-screen');
+const closeInstructionsBtn = document.getElementById('close-instructions-btn');
+let previousActiveScreen = null;
 const quitBtn = document.getElementById('quit-btn');
 const restartBtn = document.getElementById('restart-btn');
 const backToMenuBtn = document.getElementById('back-to-menu-btn');
@@ -36,56 +38,102 @@ const livesCount = document.getElementById('lives-count');
 const roundScoreEl = document.getElementById('round-score');
 const totalScoreEl = document.getElementById('total-score');
 const finalScoreEl = document.getElementById('final-score');
-let timeRemainingEl = document.getElementById('time-remaining');
+const timeRemainingEl = document.getElementById('time-remaining');
 const toastContainer = document.getElementById('toast-container');
-const contextHeader = document.getElementById('context-header');
 
 let timerInterval = null;
 let currentTimeRemaining = 0;
 
-// Init
+// Init — iOS viewport management
+// On iOS Safari, the keyboard does NOT resize the layout viewport.
+// position:fixed elements are anchored to the layout viewport, NOT the visual viewport.
+// iOS scrolls the layout viewport upward to show the focused input — this causes
+// the fixed body to scroll out of view. Our defense:
+// 1. Size body to visualViewport.height so content fits above keyboard
+// 2. NEVER set body.top (it would push content down, not up)
+// 3. Prevent page scrolling via touchmove and scroll listeners
+// 4. Force window.scrollTo(0,0) constantly to fight iOS's native scroll
 function setViewportHeight() {
-    let vh = window.innerHeight;
-    if (window.visualViewport) {
-        vh = window.visualViewport.height;
-    }
-    document.documentElement.style.setProperty('--app-height', `${vh}px`);
-    window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+        let vh = window.innerHeight;
+        
+        // Use the smallest available height to ensure we don't go under the keyboard
+        if (window.visualViewport) {
+            vh = window.visualViewport.height;
+        }
+        
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.viewportHeight) {
+            vh = Math.min(vh, window.Telegram.WebApp.viewportHeight);
+        }
+        
+        document.documentElement.style.setProperty('--app-height', `${vh}px`);
+        
+        // Aggressively reset scroll to keep the app anchored at the top
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("App initialized");
+    
+    // Telegram WebApp specific initializations
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.expand();
+        window.Telegram.WebApp.onEvent('viewportChanged', setViewportHeight);
+    }
+    
     setViewportHeight();
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setViewportHeight);
+        window.visualViewport.addEventListener('scroll', () => {
+            // When iOS scrolls the visual viewport (keyboard opening), fight it
+            window.scrollTo(0, 0);
+        });
     }
     window.addEventListener('resize', setViewportHeight);
+    
+    // Block ALL page-level scrolling.
+    // Allow scrolling inside .words-container and .modal-content only.
+    document.addEventListener('touchmove', (e) => {
+        if (!e.target.closest('.words-container') && !e.target.closest('.scrollable-screen')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Catch any scroll that sneaks through
+    window.addEventListener('scroll', () => {
+        window.scrollTo(0, 0);
+    });
 
-    timeRemainingEl = document.getElementById('time-remaining');
-    const langBtns = document.querySelectorAll('.lang-btn');
-    console.log("Found lang buttons:", langBtns.length);
+    // When input gets focus, iOS will try to scroll. Fight it after keyboard settles.
+    wordInput.addEventListener('focusin', () => {
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }, 100);
+        // Second pass after keyboard animation completes
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 500);
+    });
 
     langBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            console.log("Clicked language:", btn.dataset.lang);
+        btn.addEventListener('click', () => {
             selectLanguage(btn.dataset.lang, btn);
         });
     });
 
     startBtn.addEventListener('click', startGame);
     howToPlayBtn.addEventListener('click', openHowToPlay);
-    closeModalBtn.addEventListener('click', closeHowToPlay);
-    howToPlayModal.addEventListener('click', (e) => {
-        if (e.target === howToPlayModal) {
-            closeHowToPlay();
-        }
-    });
+    closeInstructionsBtn.addEventListener('click', closeHowToPlay);
     restartBtn.addEventListener('click', startGame);
     backToMenuBtn.addEventListener('click', showMainMenu);
     summaryBackBtn.addEventListener('click', showMainMenu);
     quitBtn.addEventListener('click', quitGame);
     submitBtn.addEventListener('click', submitWord);
-    infoBtn.addEventListener('click', showInfo);
+    infoBtn.addEventListener('click', openHowToPlay);
 
     wordInput.addEventListener('input', () => {
         if (isValidInput(wordInput.value)) {
@@ -95,13 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    console.log("Checking for shuffle button:", shuffleBtn);
-    if (shuffleBtn) {
-        console.log("Adding click listener to shuffle button");
-        shuffleBtn.addEventListener('click', shuffleWords);
-    } else {
-        console.error("Shuffle button not found in DOM!");
-    }
+    shuffleBtn.addEventListener('click', shuffleWords);
 
     if (shareScoreBtnGameover) {
         shareScoreBtnGameover.addEventListener('click', () => shareScore(finalScoreEl.textContent));
@@ -115,10 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlLang = params.get('lang');
     let autoStarted = false;
 
-    console.log(`DEBUG Init: search=${window.location.search}, lang=${urlLang}`);
-
     if (urlLang && ['en', 'de', 'ru'].includes(urlLang)) {
-        console.log("Auto-starting game with language:", urlLang);
         selectedLang = urlLang;
 
         langBtns.forEach(b => {
@@ -149,196 +188,57 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!autoStarted) {
         showMainMenu();
     }
+
+    // Desktop zoom hint (show once)
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice && window.innerWidth > 768 && !localStorage.getItem('zoomHintShown')) {
+        setTimeout(() => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const key = isMac ? '⌘' : 'Ctrl';
+            showToast(`💡 Tip: Use ${key} + / ${key} − to scale the game to your liking`, 'info');
+            localStorage.setItem('zoomHintShown', '1');
+        }, 1500);
+    }
 });
 
-// Translations
-const TRANSLATIONS = {
-    'en': {
-        startBtn: "Start Game",
-        howToPlayBtn: "How to Play",
-        howToPlayTitle: "How to Play",
-        howToPlayIntro: "Welcome to the Word Similarity Game! Your goal is to clear the board by finding hidden connections between words.",
-        howToPlayRulesHeader: "The Rules:",
-        howToPlayRule1: "<strong>Match Words:</strong> Type a word or a short sentence that relates to one or more words currently on the screen. The closer the meaning, the better the match!",
-        howToPlayRule2: "<strong>Score Points:</strong> You earn points for every successful match. Matching several words at once with a clever phrase gives you a big combo bonus!",
-        howToPlayRule3: "<strong>Beat the Clock:</strong> Keep an eye on the timer. Every matched word adds +2 seconds to your clock! Clear as many words as you can before time runs out to secure a high score.",
-        howToPlayRule4: "<strong>Use Shuffle 🔄:</strong> Stuck? Use the Shuffle button to rearrange the words and spot new associations.",
-        howToPlayRule5: "<strong>Info ℹ️:</strong> Tap the Info button to review these rules again at any time during the game.",
-        howToPlayOutro: "Ready to test your vocabulary and associative thinking? <strong>Play now and see how high you can score!</strong>",
-        tutorialTitle: "Guess a word that has a similar meaning",
-        tutorialImg: "/img/tutorial_analogy.png",
-        placeholder: "Type a related word...",
-        contextHeader: "Current Context",
-        mainTitle: "Word Similarity Game",
-        gameTitle: "Word Similarity Game",
-        lives: "Lives",
-        time: "Time",
-        score: "Score",
-        quit: "Quit",
-        gameOverTitle: "Game Over!",
-        wonTitle: "You Won!",
-        timeUpTitle: "Time's Up!",
-        outOfLivesMsg: "You ran out of lives!",
-        wonMsg: "You found all the words!",
-        scoreMsg: "You scored {score} points!",
-        finalScore: "Final Score",
-        playAgain: "Play Again",
-        shareScore: "Share Score 🏆",
-        mainMenu: "Main Menu",
-        sessionEnded: "Good Effort!",
-        totalScore: "Total Score",
-        wordsFound: "Words Found",
-        backToMenu: "Back to Menu",
-        shuffleCost: "Not enough points! Need 200.",
-        shuffleSuccess: "Words shuffled! -200 pts",
-        gameStarted: "Game Started! Good Luck!",
-        hintToast: "Type words that are semantically similar to the displayed words!",
-        shuffleTooltip: "Shuffle Words (Cost: 200)",
-        infoTooltip: "Info",
-        featureTelegramOnly: "Available only in Telegram",
-        typeWordWarning: "Please type a word!",
-        wordOnScreenWarning: "Word is already on screen!",
-        invalidMoveWarning: "Invalid Move",
-        submitError: "Error submitting word. Please try again.",
-        startError: "Could not start game. Please try again.",
-        selectLangWarning: "Please select a language first!",
-        stopError: "Error stopping game session.",
-        countdownLabel: "Game starts in"
-    },
-    'de': {
-        startBtn: "Spiel Starten",
-        howToPlayBtn: "Spielanleitung",
-        howToPlayTitle: "Spielanleitung",
-        howToPlayIntro: "Willkommen bei Word Similarity Game! Dein Ziel ist es, das Spielfeld zu leeren, indem du versteckte Verbindungen zwischen Wörtern findest.",
-        howToPlayRulesHeader: "Die Regeln:",
-        howToPlayRule1: "<strong>Wörter kombinieren:</strong> Tippe ein Wort oder einen kurzen Satz ein, der sich auf eines oder mehrere Wörter auf dem Bildschirm bezieht. Je enger die Bedeutung, desto besser der Treffer!",
-        howToPlayRule2: "<strong>Punkte sammeln:</strong> Du erhältst Punkte für jeden erfolgreichen Treffer. Wenn du mehrere Wörter gleichzeitig mit einem geschickten Begriff kombinierst, erhältst du einen großen Combo-Bonus!",
-        howToPlayRule3: "<strong>Gegen die Zeit:</strong> Behalte den Timer im Auge. Jedes gefundene Wort fügt deiner Zeit +2 Sekunden hinzu! Leere so viele Wörter wie möglich, bevor die Zeit abläuft.",
-        howToPlayRule4: "<strong>Mischen 🔄 benutzen:</strong> Kommst du nicht weiter? Nutze die Mischen-Taste, um die Wörter neu anzuordnen und neue Assoziationen zu entdecken.",
-        howToPlayRule5: "<strong>Info ℹ️:</strong> Tippe auf die Info-Taste, um diese Regeln jederzeit während des Spiels erneut zu lesen.",
-        howToPlayOutro: "Bereit, deinen Wortschatz und dein assoziatives Denken zu testen? <strong>Spiele jetzt und knacke den Highscore!</strong>",
-        tutorialTitle: "Errate ein Wort, das eine ähnliche Bedeutung hat",
-        tutorialImg: "/img/tutorial_analogy_de.png",
-        placeholder: "Tippe ein ähnliches Wort ein...",
-        contextHeader: "Aktueller Kontext",
-        mainTitle: "Word Similarity Game",
-        gameTitle: "Word Similarity Game",
-        lives: "Leben",
-        time: "Zeit",
-        score: "Punkte",
-        quit: "Beenden",
-        gameOverTitle: "Spiel vorbei!",
-        wonTitle: "Gewonnen!",
-        timeUpTitle: "Die Zeit ist um!",
-        outOfLivesMsg: "Du hast keine Leben mehr!",
-        wonMsg: "Du hast alle Wörter gefunden!",
-        scoreMsg: "Du hast {score} Punkte erzielt!",
-        finalScore: "Endstand",
-        playAgain: "Nochmal spielen",
-        shareScore: "Ergebnis teilen 🏆",
-        mainMenu: "Hauptmenü",
-        sessionEnded: "Guter Versuch!",
-        totalScore: "Gesamtpunktzahl",
-        wordsFound: "Gefundene Wörter",
-        backToMenu: "Zurück zum Menü",
-        shuffleCost: "Nicht genug Punkte! Benötigt werden 200.",
-        shuffleSuccess: "Wörter gemischt! -200 Pkt",
-        gameStarted: "Spiel gestartet! Viel Erfolg!",
-        hintToast: "Tippe Wörter ein, die den angezeigten Wörtern inhaltlich ähnlich sind!",
-        shuffleTooltip: "Wörter mischen (Kosten: 200)",
-        infoTooltip: "Info",
-        featureTelegramOnly: "Nur in Telegram verfügbar",
-        typeWordWarning: "Bitte tippe ein Wort ein!",
-        wordOnScreenWarning: "Wort ist bereits auf dem Bildschirm!",
-        invalidMoveWarning: "Ungültiger Zug",
-        submitError: "Fehler beim Senden des Wortes. Bitte versuche es erneut.",
-        startError: "Spiel konnte nicht gestartet werden. Bitte versuche es erneut.",
-        selectLangWarning: "Bitte wähle zuerst eine Sprache!",
-        stopError: "Fehler beim Beenden der Spielsitzung.",
-        countdownLabel: "Spiel beginnt in"
-    },
-    'ru': {
-        startBtn: "Начать игру",
-        howToPlayBtn: "Как играть",
-        howToPlayTitle: "Как играть",
-        howToPlayIntro: "Добро пожаловать в Word Similarity Game! Ваша цель — очистить поле, находя скрытые связи между словами.",
-        howToPlayRulesHeader: "Правила:",
-        howToPlayRule1: "<strong>Ищите ассоциации:</strong> Введите слово или короткую фразу, которая относится к одному или нескольким словам на экране. Чем ближе смысл, тем лучше результат!",
-        howToPlayRule2: "<strong>Набирайте очки:</strong> Вы получаете очки за каждое угаданное слово. Объединяя сразу несколько слов одной фразой, вы получите большой комбо-бонус!",
-        howToPlayRule3: "<strong>Следите за временем:</strong> Каждое угаданное слово добавляет +2 секунды к вашему времени! Постарайтесь убрать как можно больше слов, пока время не вышло.",
-        howToPlayRule4: "<strong>Перемешивание 🔄:</strong> Застряли? Используйте кнопку перемешивания, чтобы взглянуть на слова под другим углом и найти новые связи.",
-        howToPlayRule5: "<strong>Инфо ℹ️:</strong> Нажмите на кнопку Инфо, чтобы просмотреть эти правила в любое время во время игры.",
-        howToPlayOutro: "Готовы проверить свой словарный запас и ассоциативное мышление? <strong>Начните игру и узнайте, сколько очков вы сможете набрать!</strong>",
-        tutorialTitle: "Угадайте слово, которое имеет похожее значение",
-        tutorialImg: "/img/tutorial_analogy_ru.png",
-        placeholder: "Введите похожее слово...",
-        contextHeader: "Текущий контекст",
-        mainTitle: "Word Similarity Game",
-        gameTitle: "Word Similarity Game",
-        lives: "Жизни",
-        time: "Время",
-        score: "Очки",
-        quit: "Выйти",
-        gameOverTitle: "Игра окончена!",
-        wonTitle: "Победа!",
-        timeUpTitle: "Время вышло!",
-        outOfLivesMsg: "Жизни закончились!",
-        wonMsg: "Вы нашли все слова!",
-        scoreMsg: "Вы набрали {score} очков!",
-        finalScore: "Итоговый счет",
-        playAgain: "Играть снова",
-        shareScore: "Поделиться 🏆",
-        mainMenu: "Главное меню",
-        sessionEnded: "Хорошая попытка!",
-        totalScore: "Общий счет",
-        wordsFound: "Найденные слова",
-        backToMenu: "Назад в меню",
-        shuffleCost: "Недостаточно очков! Нужно 200.",
-        shuffleSuccess: "Слова перемешаны! -200 очков",
-        gameStarted: "Игра началась! Удачи!",
-        hintToast: "Вводите слова, которые по смыслу похожи на отображаемые!",
-        shuffleTooltip: "Перемешать слова (Цена: 200)",
-        infoTooltip: "Инфо",
-        featureTelegramOnly: "Доступно только в Telegram",
-        typeWordWarning: "Пожалуйста, введите слово!",
-        wordOnScreenWarning: "Слово уже на экране!",
-        invalidMoveWarning: "Неверный ход",
-        submitError: "Ошибка отправки слова. Попробуйте еще раз.",
-        startError: "Не удалось начать игру. Попробуйте еще раз.",
-        selectLangWarning: "Пожалуйста, выберите язык!",
-        stopError: "Ошибка завершения сессии.",
-        countdownLabel: "Игра начнется через"
-    }
-};
 
-function getText(key, lang) {
-    const l = lang || 'en';
-    return (TRANSLATIONS[l] && TRANSLATIONS[l][key]) || TRANSLATIONS['en'][key];
-}
+
 
 function selectLanguage(lang, btn) {
-    if (!lang) return;
-    selectedLang = lang;
+    try {
+        if (!lang) return;
+        selectedLang = lang;
 
-    // Highlight button
-    langBtns.forEach(b => {
-        b.style.border = 'none';
-        b.style.opacity = '0.7';
-    });
-    btn.style.border = '2px solid var(--accent)';
-    btn.style.opacity = '1';
+        // Highlight button
+        langBtns.forEach(b => {
+            b.style.border = 'none';
+            b.style.opacity = '0.7';
+        });
+        if (btn) {
+            btn.style.border = '2px solid var(--accent)';
+            btn.style.opacity = '1';
+        }
 
-    // Show start button and instruction
-    startBtn.classList.remove('hidden');
-    howToPlayBtn.classList.remove('hidden');
+        // Show start button and instruction
+        if (startActions) {
+            startActions.classList.remove('hidden');
+        } else {
+            console.error('startActions element not found');
+        }
 
-    updateStaticText(selectedLang);
+        updateStaticText(selectedLang);
+    } catch (e) {
+        console.error('Error in selectLanguage:', e);
+        if (typeof showToast === 'function') {
+            showToast('Error selecting language: ' + e.message, 'error');
+        }
+    }
 }
 
 function updateStaticText(lang) {
     // Main Screen
-    startBtn.textContent = getText('startBtn', lang);
-    howToPlayBtn.textContent = getText('howToPlayBtn', lang);
+    if (startBtn) startBtn.textContent = getText('startBtn', lang);
+    if (howToPlayBtn) howToPlayBtn.title = getText('howToPlayBtn', lang);
 
     // Tutorial
     updateTextContent('tutorial-title', getText('tutorialTitle', lang));
@@ -363,10 +263,7 @@ function updateStaticText(lang) {
     updateHTMLContent('how-to-play-outro', getText('howToPlayOutro', lang));
 
     // Game Area
-    if (document.getElementById('game-title')) {
-        document.getElementById('game-title').textContent = getText('gameTitle', lang);
-    }
-    if (contextHeader) contextHeader.textContent = getText('contextHeader', lang);
+    updateTextContent('game-title', getText('gameTitle', lang));
 
     // Labels
     updateTextContent('lives-label', getText('lives', lang));
@@ -411,17 +308,20 @@ function updateHTMLContent(id, html) {
     if (el) el.innerHTML = html;
 }
 
+const ALL_SCREENS = [startScreen, gameArea, gameOverScreen, summaryScreen, howToPlayScreen];
+
+function showScreen(activeEl) {
+    ALL_SCREENS.forEach(el => {
+        if (el) el.classList.toggle('hidden', el !== activeEl);
+    });
+}
+
 function showMainMenu() {
     stopTimer();
-    startScreen.classList.remove('hidden');
-    gameArea.classList.add('hidden');
-    gameOverScreen.classList.add('hidden');
-    summaryScreen.classList.add('hidden');
+    showScreen(startScreen);
 
-    // Reset selection state mostly for UI cleanliness, but keeping selectedLang if they just paused is fine.
-    // If we want to force re-selection:
     selectedLang = null;
-    startBtn.classList.add('hidden');
+    startActions.classList.add('hidden');
     langBtns.forEach(b => {
         b.style.border = 'none';
         b.style.opacity = '1';
@@ -429,8 +329,23 @@ function showMainMenu() {
 }
 
 async function openHowToPlay() {
-    howToPlayModal.classList.remove('hidden');
-    if (sessionId) {
+    // Determine the current screen so we can go back
+    previousActiveScreen = ALL_SCREENS.find(el => el && !el.classList.contains('hidden'));
+    
+    // Reset BEFORE showing to fight browser scroll restoration
+    if (howToPlayScreen) {
+        howToPlayScreen.scrollTop = 0;
+    }
+    
+    showScreen(howToPlayScreen);
+    
+    // Force scroll to top
+    if (howToPlayScreen) {
+        howToPlayScreen.scrollTop = 0;
+        howToPlayScreen.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+    
+    if (sessionId && previousActiveScreen === gameArea) {
         stopTimer(); // Pause client-side timer
         try {
             await fetch(`${API_BASE}/${sessionId}/pause`, { method: 'POST' });
@@ -441,8 +356,18 @@ async function openHowToPlay() {
 }
 
 async function closeHowToPlay() {
-    howToPlayModal.classList.add('hidden');
-    if (sessionId) {
+    if (howToPlayScreen) {
+        howToPlayScreen.scrollTop = 0;
+    }
+
+    if (!previousActiveScreen) {
+        showMainMenu();
+        return;
+    }
+
+    showScreen(previousActiveScreen);
+    
+    if (sessionId && previousActiveScreen === gameArea) {
         startTimer(); // Resume client-side timer
         try {
             await fetch(`${API_BASE}/${sessionId}/resume`, { method: 'POST' });
@@ -450,16 +375,14 @@ async function closeHowToPlay() {
             console.warn('Could not resume game server-side', e);
         }
     }
+    
+    previousActiveScreen = null;
 }
 
-function showInfo() {
-    openHowToPlay();
-}
+
 
 async function shuffleWords() {
-    console.log("shuffleWords called. SessionId:", sessionId);
     if (!sessionId || shuffleBtn.disabled) {
-        console.warn("Cannot shuffle: No session or disabled.");
         return;
     }
 
@@ -485,53 +408,58 @@ async function shuffleWords() {
     }
 }
 
+function runCountdown(seconds) {
+    return new Promise(resolve => {
+        countdownOverlay.classList.remove('hidden');
+        let count = seconds;
+        countdownText.textContent = count;
+
+        const interval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownText.textContent = count;
+            } else {
+                clearInterval(interval);
+                countdownOverlay.classList.add('hidden');
+                resolve();
+            }
+        }, 1000);
+    });
+}
+
 async function startGame() {
     if (!selectedLang) {
         showToast(getText('selectLangWarning', selectedLang), 'warning');
         return;
     }
 
-    countdownOverlay.classList.remove('hidden');
-    let count = 3;
-    countdownText.textContent = count;
+    await runCountdown(3);
 
-    const countInterval = setInterval(async () => {
-        count--;
-        if (count > 0) {
-            countdownText.textContent = count;
-        } else {
-            clearInterval(countInterval);
-            countdownOverlay.classList.add('hidden');
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const seed = params.get('seed');
 
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const seed = params.get('seed');
-
-                let url = `${API_BASE}/start?lang=${selectedLang}`;
-                if (seed) {
-                    url += `&seed=${seed}`;
-                }
-
-                const response = await fetch(url, { method: 'POST' });
-                if (!response.ok) throw new Error('Failed to start game');
-
-                const data = await response.json();
-                sessionId = data.session_id;
-
-                // Reset UI
-                wordInput.value = '';
-                submitBtn.classList.remove('visible');
-
-                updateUI(data.game_state);
-
-                showGameArea();
-                wordInput.focus();
-            } catch (error) {
-                console.error('Error starting game:', error);
-                showToast(getText('startError', selectedLang), 'warning');
-            }
+        let url = `${API_BASE}/start?lang=${selectedLang}`;
+        if (seed) {
+            url += `&seed=${seed}`;
         }
-    }, 1000);
+
+        const response = await fetch(url, { method: 'POST' });
+        if (!response.ok) throw new Error('Failed to start game');
+
+        const data = await response.json();
+        sessionId = data.session_id;
+
+        wordInput.value = '';
+        submitBtn.classList.remove('visible');
+
+        updateUI(data.game_state);
+        showScreen(gameArea);
+        wordInput.focus();
+    } catch (error) {
+        console.error('Error starting game:', error);
+        showToast(getText('startError', selectedLang), 'warning');
+    }
 }
 
 async function quitGame() {
@@ -559,20 +487,9 @@ async function quitGame() {
 }
 
 function showSummaryScreen(stats) {
-    gameArea.classList.add('hidden');
-    gameOverScreen.classList.add('hidden');
-    startScreen.classList.add('hidden');
-    summaryScreen.classList.remove('hidden');
-
+    showScreen(summaryScreen);
     summaryScoreEl.textContent = stats.total_score;
     summaryWordsFoundEl.textContent = stats.words_found;
-}
-
-function showGameArea() {
-    startScreen.classList.add('hidden');
-    gameOverScreen.classList.add('hidden');
-    summaryScreen.classList.add('hidden');
-    gameArea.classList.remove('hidden');
 }
 
 function showError() {
@@ -648,10 +565,6 @@ function showToast(message, type = 'info') {
 }
 
 function updateUI(state) {
-    if (state.round_score === 0 && state.total_score === 0 && state.removed_words.length === 0) {
-        currentWordsList.innerHTML = '';
-    }
-
     currentWordsList.innerHTML = '';
     state.current_words.forEach(word => {
         const li = document.createElement('li');
@@ -690,8 +603,7 @@ function updateUI(state) {
 
 function handleGameOver(state) {
     stopTimer();
-    gameArea.classList.add('hidden');
-    gameOverScreen.classList.remove('hidden');
+    showScreen(gameOverScreen);
     finalScoreEl.textContent = state.total_score;
 
     const gameOverTitle = gameOverScreen.querySelector('h2');

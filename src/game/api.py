@@ -23,6 +23,7 @@ from src.game.metrics import (
     game_errors_total,
     game_words_submitted_total,
 )
+from scripts import stamp_cache
 
 logger = get_logger(__name__)
 
@@ -81,6 +82,12 @@ class GameManager:
 # Application Lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Automatically stamp cache hashes on startup/reload
+    try:
+        stamp_cache.main()
+    except Exception as e:
+        logger.error(f"Failed to stamp cache: {e}")
+
     # Initialize shared resources
     logger.info("Initializing Game API...")
     game_manager = GameManager()
@@ -108,6 +115,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def cache_control_middleware(request: Request, call_next):
+    """Set cache headers: no-cache for HTML, long-cache for hashed assets."""
+    response = await call_next(request)
+    path = request.url.path
+
+    if path.endswith(".html") or path == "/" or "." not in path.split("/")[-1]:
+        # HTML pages: always revalidate (ensures fresh hashed asset URLs)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    elif "?h=" in str(request.url):
+        # Hashed assets (CSS/JS with ?h=<hash>): cache for 1 year
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+
+    return response
 
 
 # Prometheus metrics endpoint

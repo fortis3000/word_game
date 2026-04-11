@@ -90,11 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', setViewportHeight);
     
     // Block ALL page-level scrolling.
-    // The words-container has overflow-y:auto for its own scrolling.
-    // But the page itself should never scroll.
+    // Allow scrolling inside .words-container and .modal-content only.
     document.addEventListener('touchmove', (e) => {
-        // Allow scrolling inside .words-container, block everything else
-        if (!e.target.closest('.words-container')) {
+        if (!e.target.closest('.words-container') && !e.target.closest('.modal-content')) {
             e.preventDefault();
         }
     }, { passive: false });

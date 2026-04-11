@@ -572,8 +572,10 @@ input[type="text"]:focus {
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-main);
     animation: fadeIn 0.3s ease-out;
-    max-height: 90vh;
+    max-height: calc(var(--app-height, 90vh) - 4rem);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-content h2 {

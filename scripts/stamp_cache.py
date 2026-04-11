@@ -2,13 +2,21 @@ import hashlib
 import re
 from pathlib import Path
 
+from typing import TypedDict
+
 # Paths relative to this script
 ROOT_DIR = Path(__file__).parent.parent
 STATIC_DIR = ROOT_DIR / "src" / "game" / "static"
 INDEX_FILE = STATIC_DIR / "index.html"
 
+
+class AssetInfo(TypedDict):
+    path: Path
+    pattern: str
+
+
 # Mapping of asset filename to its path and placeholder/regex pattern
-ASSETS = {
+ASSETS: dict[str, AssetInfo] = {
     "style.css": {
         "path": STATIC_DIR / "css" / "style.css",
         "pattern": r"style\.css\?h=([a-f0-9]+|__CSS_HASH__)",
